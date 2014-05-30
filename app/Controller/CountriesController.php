@@ -20,15 +20,14 @@ class CountriesController extends AppController {
     public function index() {
         try {
         	$q = $this->request->query('q');
-        	if (!$q) {
-        		throw new Exception('no search string specified');
-        	}
+
         	$q = mb_convert_case(addslashes($q), MB_CASE_LOWER, "UTF-8");
         	
         	$page = ($page = intval($this->request->query('page'))) ? $page : 1;
         	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
         	
-        	$conditions = array('LOWER(name) LIKE "%'.$q.'%"');
+                $conditions = ($q) ? array('LOWER(name) LIKE "%'.$q.'%"') : array();
+
         	$aRowset = $this->Country->find('all', array(
         		'fields' => array('id', 'name', 'POSITION("'.$q.'" IN name) AS pos'),
         		'conditions' => $conditions,
