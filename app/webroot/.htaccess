@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /api/app/webroot/
+
+#   Если файла noimage запрашиваемого размера не оказалось, то отдадим 32х32
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} img/users/noimage/.*$
+    RewriteRule ^img/users/noimage/(\d+)\.jpg$ img/users/noimage/32.jpg
+
+#   Если запросили картинку аватарки пользователя, которой нет, то отдадим noimage соответствующего размера
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} img/users/.*$
+    RewriteRule ^img/users/\d+/(\d+)\.jpg$ img/users/noimage/$1.jpg [L]
+
+#   Базовое правило CakePHP
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
