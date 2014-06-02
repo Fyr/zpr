@@ -1,46 +1,16 @@
 <?php
-/**
- * Application level Controller
- *
- * This file is application-wide controller file. You can put all
- * application-wide controller-related methods here.
- *
- * PHP 5
- *
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
- *
- * Licensed under The MIT License
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright 2005-2012, Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @package       app.Controller
- * @since         CakePHP(tm) v 0.2.9
- * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
- */
-
 App::uses('Controller', 'Controller');
 
-/**
- * Application Controller
- *
- * Add your application-wide methods in the class below, your controllers
- * will inherit them.
- *
- * @package       app.Controller
- * @link http://book.cakephp.org/2.0/en/controllers.html#the-app-controller
- *
- * @property Auth Auth
- * @property CakeResponse response
- * @property CakeRequest request
- */
 class AppController extends Controller {
+	
+	const STATUS_OK = 'success';
+	const STATUS_ERROR = 'error';
+
     public $uses = array('Auth');
     public $authCookie;
     public $currentUserId;
     protected $auth_cookie_name;
-    protected $json_render = false;
+    protected $json_render = false, $_response = null;
 
     public function beforeFilter() {
         parent::beforeFilter();
@@ -73,7 +43,9 @@ class AppController extends Controller {
             $this->viewPath = 'Layouts';
             $this->view     = 'empty';
 
+            
             $this->response->type('json');
+            $this->renderJSON();
             if (array_key_exists('answer', $this->viewVars)) {
                 $this->response->body(json_encode($this->viewVars['answer']));
             }
@@ -245,4 +217,29 @@ class AppController extends Controller {
 
         return $result;
     }
+    public function renderJSON() {
+	    if ($this->_response) {
+	    	/*
+    	    $this->set('_response', $this->_response);
+    	    $this->set('_serialize', '_response');
+    	    */
+	    	$answer = $this->_response;
+	    	$this->set(compact('answer'));
+	    }
+	}
+	public function setResponse($data = array()) {
+	    $this->_response = array('status' => self::STATUS_OK);
+	    if ($data) {
+	    	$this->_response['data'] = $data;
+	    }
+	}
+	
+	public function getResponse() {
+	    return $this->_response;
+	}
+	
+	public function setError($errMsg) {
+	    $this->_response = array('status' => self::STATUS_ERROR, 'data' => $errMsg);
+	}
+
 }

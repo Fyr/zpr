@@ -216,7 +216,7 @@ class UserProfilesController extends AppController {
                 $data['user']['post_id']       = $user['User']['post_id'];
                 $data['user']['last_position'] = $user['User']['last_position'];
                 $data['country']               = array();
-                $data['country']['code']       = $user['Country']['code'];
+                $data['country']['name']       = $user['Country']['name'];
                 $data['likes']                 = $user[0]['positive_votes'];
                 $data['dislikes']              = $user[0]['negative_votes'];
                 $data['position']              = $res[0]['rating'];

@@ -29,6 +29,7 @@ class UsersController extends AppController {
         'UserMessage',
         'HallOfFame',
         'Credo',
+        'UserDefaults'
     );
     public $components = array('RequestHandler');
 
@@ -119,42 +120,30 @@ class UsersController extends AppController {
      *     pages {TPages}
      */
     public function index() {
-        $success = true;
         $data    = array();
+        try {
 
-        if (!isset($this->request->query['q'])) {
-            $this->response->statusCode(400);
-            $success = false;
-            $data = 'no search string specified';
-        }
+	        if (!isset($this->request->query['q'])) {
+	            throw new Exception('no search string specified');
+	        }
 
-        if ($success) {
             $search_string = $this->request->query['q'];
 
-            if (isset($this->request->query['per_page'])) {
-                $per_page = (int)$this->request->query['per_page'];
-            }
-            $per_page = (isset($per_page) and $per_page > 0) ? $per_page : 25;
-
-            if (isset($this->request->query['page'])) {
-                $page = (int)$this->request->query['page'];
-            }
-            $page = (isset($page) and $page > 0) ? $page : 1;
+            $page = ($page = intval($this->request->query('page'))) ? $page : 1;
+        	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
 
             $joins = array();
             $joins[] = array(
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id',
-                                      'Country.is_deleted' => 0)
+                'conditions' => array('Country.id = User.country_id')
             );
             $joins[] = array(
                 'table'      => $this->City->getDataSource()->fullTableName($this->City),
                 'alias'      => 'City',
                 'type'       => 'LEFT',
-                'conditions' => array('City.id = User.city_id',
-                                      'City.is_deleted' => 0)
+                'conditions' => array('City.id = User.city_id')
             );
             $joins[] = array(
                 'table'      => $this->Credo->getDataSource()->fullTableName($this->Credo),
@@ -203,15 +192,13 @@ class UsersController extends AppController {
                                                             'User.is_new',
                                                             'User.email',
                                                             'User.status',
+                                                            'User.balance',
                                                             'Credo.text',
                                                             'Country.id',
-                                                            'Country.code',
                                                             'Country.name',
                                                             'City.id',
                                                             'City.name',
                                                             'City.region_name',
-                                                            'City.longitude',
-                                                            'City.latitude',
                                                         ),
                                                         'order' => array(
                                                             'User.name',
@@ -232,20 +219,17 @@ class UsersController extends AppController {
                     $ans['is_new']   = $user['User']['is_new'];
                     $ans['email']    = $user['User']['email'];
                     $ans['status']   = $user['User']['status'];
+                    $ans['balance']   = $user['User']['balance'];
                     $ans['credo']    = $user['Credo']['text'];
 
                     $ans['country']         = array();
                     $ans['country']['id']   = $user['Country']['id'];
-                    $ans['country']['code'] = $user['Country']['code'];
                     $ans['country']['name'] = $user['Country']['name'];
 
                     $ans['city']                  = array();
                     $ans['city']['id']            = $user['City']['id'];
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
-                    $ans['city']['position']      = array();
-                    $ans['city']['position']['x'] = $user['City']['longitude'];
-                    $ans['city']['position']['y'] = $user['City']['latitude'];
 
                     $ans['actions'] = $this->User->getUserActions($this->currentUserId, $ans['id']);
 
@@ -257,10 +241,11 @@ class UsersController extends AppController {
                                        'page'     => $page,
                                        'total'    => $users_count);
             }
+            
+        	$this->setResponse($data);
+        } catch (Exception $e) {
+        	$this->setError($e->getMessage());
         }
-
-        $answer = array('status' => ($success ? 'success' : 'error'), 'data'   => $data);
-        $this->set(compact('answer'));
     }
 
     /**
@@ -277,16 +262,13 @@ class UsersController extends AppController {
      * @param $id
      */
     public function view($id) {
-        $success = true;
-        $data    = array();
+        $data = array();
+        try {
 
-        if (!$id) {
-            $this->response->statusCode(400);
-            $success = false;
-            $data    = 'no user specified';
-        }
+	        if (!$id) {
+	            throw new Exception('no user specified');
+	        }
 
-        if ($success) {
             if (strpos($id, ',')) {
                 $ids = explode(',', $id);
 
@@ -302,10 +284,12 @@ class UsersController extends AppController {
                     $data = $user;
                 }
             }
+            
+            $this->setResponse($data);
+        } catch (Exception $e) {
+        	$this->setError($e->getMessage());
         }
 
-        $answer = array('status' => ($success ? 'success' : 'error'), 'data' => $data);
-        $this->set(compact('answer'));
     }
 
     /**
@@ -442,7 +426,9 @@ class UsersController extends AppController {
             $user_data['city']     = $this->request->data['city'];
 
             try {
-                $user = $this->User->add($user_data);
+            	$defaults = $this->UserDefaults->getList();
+            	extract($defaults);
+                $user = $this->User->add(array_merge(compact('credo_id', 'status'), $user_data));
 
                 $this->UserRating->create();
 
@@ -451,6 +437,7 @@ class UsersController extends AppController {
                     $user_rating_data['user_id']    = $user['id'];
                     $user_rating_data['country_id'] = $user['country']['id'];
                     $user_rating_data['city_id']    = $user['city']['id'];
+                    $user_rating_data = array_merge(compact('positive_votes'), $user_rating_data);
 
                     $success = $this->UserRating->save($user_rating_data);
                 }

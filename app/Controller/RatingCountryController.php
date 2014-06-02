@@ -40,25 +40,15 @@ class RatingCountryController extends AppController {
      * @param $id
      */
     public function index($id) {
-        $success = true;
         $data    = array();
+        try {
 
-        if (!$id) {
-            $this->response->statusCode(400);
-            $success = false;
-            $data    = 'no country specified';
-        }
+	        if (!$id) {
+	            throw new Exception('no country specified');
+	        }
 
-        if ($success) {
-            if (isset($this->request->query['per_page'])) {
-                $per_page = (int)$this->request->query['per_page'];
-            }
-            $per_page = (isset($per_page) and $per_page > 0) ? $per_page : 25;
-
-            if (isset($this->request->query['page'])) {
-                $page = (int)$this->request->query['page'];
-            }
-            $page = (isset($page) and $page > 0) ? $page : 1;
+            $page = ($page = intval($this->request->query('page'))) ? $page : 1;
+        	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
 
             $conditions = array(
                 'User.country_id'         => $id,
@@ -77,15 +67,13 @@ class RatingCountryController extends AppController {
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id',
-                                      'Country.is_deleted' => 0)
+                'conditions' => array('Country.id = User.country_id')
             );
             $joins[] = array(
                 'table'      => $this->City->getDataSource()->fullTableName($this->City),
                 'alias'      => 'City',
                 'type'       => 'LEFT',
-                'conditions' => array('City.id = User.city_id',
-                                      'City.is_deleted' => 0)
+                'conditions' => array('City.id = User.city_id')
             );
             $joins[] = array(
                 'table'      => $this->Credo->getDataSource()->fullTableName($this->Credo),
@@ -145,13 +133,10 @@ class RatingCountryController extends AppController {
                                                             'User.status',
                                                             'Credo.text',
                                                             'Country.id',
-                                                            'Country.code',
                                                             'Country.name',
                                                             'City.id',
                                                             'City.name',
                                                             'City.region_name',
-                                                            'City.longitude',
-                                                            'City.latitude',
                                                             'IFNULL(UserRating.positive_votes, 0) as likes',
                                                             'IFNULL(UserRating.negative_votes, 0) as dislikes'
                                                         ),
@@ -256,16 +241,12 @@ class RatingCountryController extends AppController {
 
                     $ans['country']         = array();
                     $ans['country']['id']   = $user['Country']['id'];
-                    $ans['country']['code'] = $user['Country']['code'];
-                    $ans['country']['name'] = $user['Country']['name'];
+                    $ans['country']['code'] = $user['Country']['name'];
 
                     $ans['city']                  = array();
                     $ans['city']['id']            = $user['City']['id'];
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
-                    $ans['city']['position']      = array();
-                    $ans['city']['position']['x'] = $user['City']['longitude'];
-                    $ans['city']['position']['y'] = $user['City']['latitude'];
 
                     // Временное решение для полной информации по пользователям
                     $ans['likes']    = $user[0]['likes'];
@@ -293,12 +274,11 @@ class RatingCountryController extends AppController {
                     'total'    => $users_count
                 );
             }
+
+        	$this->setResponse($data);
+        } catch (Exception $e) {
+        	$this->setError($e->getMessage());
         }
-
-        $answer = array('status' => ($success ? 'success' : 'error'),
-                        'data'   => $data);
-
-        $this->set(compact('answer'));
     }
 
     /**
@@ -316,25 +296,16 @@ class RatingCountryController extends AppController {
      * @param $id
      */
     public function cities($id) {
-        $success = true;
         $data    = array();
 
-        if (!$id) {
-            $this->response->statusCode(400);
-            $success = false;
-            $data    = 'no country specified';
-        }
+        try {
+        	
+	        if (!$id) {
+	        	throw new Exception('no country specified');
+	        }
 
-        if ($success) {
-            if (isset($this->request->query['per_page'])) {
-                $per_page = (int)$this->request->query['per_page'];
-            }
-            $per_page = (isset($per_page) and $per_page > 0) ? $per_page : 25;
-
-            if (isset($this->request->query['page'])) {
-                $page = (int)$this->request->query['page'];
-            }
-            $page = (isset($page) and $page > 0) ? $page : 1;
+            $page = ($page = intval($this->request->query('page'))) ? $page : 1;
+        	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
 
             $sub_db = $this->User->getDataSource();
             $sub_joins = array();
@@ -395,8 +366,6 @@ class RatingCountryController extends AppController {
 
             $conditions = array(
                 'City.country_id'         => $id,
-                'Country.is_deleted'      => 0,
-                'City.is_deleted'         => 0,
                 'User.is_ready'           => 1,
                 'User.is_in_hall_of_fame' => 0
             );
@@ -444,13 +413,10 @@ class RatingCountryController extends AppController {
                                                               'User.status',
                                                               'Credo.text',
                                                               'Country.id',
-                                                              'Country.code',
                                                               'Country.name',
                                                               'City.id',
                                                               'City.name',
                                                               'City.region_name',
-                                                              'City.longitude',
-                                                              'City.latitude',
                                                               'IFNULL(UserRating.positive_votes, 0) as likes',
                                                               'IFNULL(UserRating.negative_votes, 0) as dislikes'
                                                           ),
@@ -563,16 +529,12 @@ class RatingCountryController extends AppController {
 
                     $ans['country']         = array();
                     $ans['country']['id']   = $leader['Country']['id'];
-                    $ans['country']['code'] = $leader['Country']['code'];
                     $ans['country']['name'] = $leader['Country']['name'];
 
                     $ans['city']                  = array();
                     $ans['city']['id']            = $leader['City']['id'];
                     $ans['city']['name']          = $leader['City']['name'];
                     $ans['city']['region_name']   = $leader['City']['region_name'];
-                    $ans['city']['position']      = array();
-                    $ans['city']['position']['x'] = $leader['City']['longitude'];
-                    $ans['city']['position']['y'] = $leader['City']['latitude'];
 
                     // Временное решение для полной информации по пользователям
                     $ans['likes']    = $leader[0]['likes'];
@@ -600,11 +562,10 @@ class RatingCountryController extends AppController {
                     'total'    => $users_count
                 );
             }
+
+            $this->setResponse($data);
+        } catch (Exception $e) {
+        	$this->setError($e->getMessage());
         }
-
-        $answer = array('status' => ($success ? 'success' : 'error'),
-                        'data'   => $data);
-
-        $this->set(compact('answer'));
     }
 }

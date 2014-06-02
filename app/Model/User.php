@@ -73,15 +73,13 @@ class User extends AppModel {
             'table'      => $country->getDataSource()->fullTableName($country),
             'alias'      => 'Country',
             'type'       => 'LEFT',
-            'conditions' => array('Country.id = User.country_id',
-                                  'Country.is_deleted' => 0)
+            'conditions' => array('Country.id = User.country_id')
         );
         $joins[] = array(
             'table'      => $city->getDataSource()->fullTableName($city),
             'alias'      => 'City',
             'type'       => 'LEFT',
-            'conditions' => array('City.id = User.city_id',
-                                  'City.is_deleted' => 0)
+            'conditions' => array('City.id = User.city_id')
         );
         $joins[] = array(
             'table'      => $credo->getDataSource()->fullTableName($credo),
@@ -112,15 +110,13 @@ class User extends AppModel {
                 'User.is_new',
                 'User.email',
                 'User.status',
+                'User.balance',
                 'Credo.text',
                 'Country.id',
-                'Country.code',
                 'Country.name',
                 'City.id',
                 'City.name',
                 'City.region_name',
-                'City.longitude',
-                'City.latitude',
                 'IFNULL(UserRating.positive_votes, 0) as likes',
                 'IFNULL(UserRating.negative_votes, 0) as dislikes'
             )
@@ -191,20 +187,17 @@ class User extends AppModel {
         $answer['is_new']   = $user['User']['is_new'];
         $answer['email']    = $user['User']['email'];
         $answer['status']   = $user['User']['status'];
+        $answer['balance']   = $user['User']['balance'];
         $answer['credo']    = $user['Credo']['text'];
 
         $answer['country']         = array();
         $answer['country']['id']   = $user['Country']['id'];
-        $answer['country']['code'] = $user['Country']['code'];
         $answer['country']['name'] = $user['Country']['name'];
 
         $answer['city']                  = array();
         $answer['city']['id']            = $user['City']['id'];
         $answer['city']['name']          = $user['City']['name'];
         $answer['city']['region_name']   = $user['City']['region_name'];
-        $answer['city']['position']      = array();
-        $answer['city']['position']['x'] = $user['City']['longitude'];
-        $answer['city']['position']['y'] = $user['City']['latitude'];
 
         $answer['likes']    = $user[0]['likes'];
         $answer['dislikes'] = $user[0]['dislikes'];
@@ -240,15 +233,13 @@ class User extends AppModel {
             'table'      => $country->getDataSource()->fullTableName($country),
             'alias'      => 'Country',
             'type'       => 'LEFT',
-            'conditions' => array('Country.id = User.country_id',
-                                  'Country.is_deleted' => 0)
+            'conditions' => array('Country.id = User.country_id')
         );
         $joins[] = array(
             'table'      => $city->getDataSource()->fullTableName($city),
             'alias'      => 'City',
             'type'       => 'LEFT',
-            'conditions' => array('City.id = User.city_id',
-                                  'City.is_deleted' => 0)
+            'conditions' => array('City.id = User.city_id')
         );
         $joins[] = array(
             'table'      => $credo->getDataSource()->fullTableName($credo),
@@ -280,15 +271,13 @@ class User extends AppModel {
                                       'User.is_new',
                                       'User.email',
                                       'User.status',
+                                      'User.balance',
                                       'Credo.text',
                                       'Country.id',
-                                      'Country.code',
                                       'Country.name',
                                       'City.id',
                                       'City.name',
                                       'City.region_name',
-                                      'City.longitude',
-                                      'City.latitude',
                                       'IFNULL(UserRating.positive_votes, 0) as likes',
                                       'IFNULL(UserRating.negative_votes, 0) as dislikes'
                                   ),
@@ -377,20 +366,17 @@ class User extends AppModel {
             $ans['is_new']   = $user['User']['is_new'];
             $ans['email']    = $user['User']['email'];
             $ans['status']   = $user['User']['status'];
+            $ans['balance']   = $user['User']['balance'];
             $ans['credo']    = $user['Credo']['text'];
 
             $ans['country']         = array();
             $ans['country']['id']   = $user['Country']['id'];
-            $ans['country']['code'] = $user['Country']['code'];
             $ans['country']['name'] = $user['Country']['name'];
 
             $ans['city']                  = array();
             $ans['city']['id']            = $user['City']['id'];
             $ans['city']['name']          = $user['City']['name'];
             $ans['city']['region_name']   = $user['City']['region_name'];
-            $ans['city']['position']      = array();
-            $ans['city']['position']['x'] = $user['City']['longitude'];
-            $ans['city']['position']['y'] = $user['City']['latitude'];
 
             $ans['likes']    = $user[0]['likes'];
             $ans['dislikes'] = $user[0]['dislikes'];
@@ -422,7 +408,6 @@ class User extends AppModel {
             $user_data['city_id'],
             $user_data['last_position'],
             $user_data['post_id'],
-            $user_data['credo_id'],
             $user_data['likes'],
             $user_data['dislikes'],
             $user_data['world_position'],
@@ -441,23 +426,22 @@ class User extends AppModel {
         if (!$user_data or !is_array($user_data) or empty($user_data)) {
             return false;
         }
+        $lNew = (isset($user_data['is_new']) && $user_data['is_new']);
         $this->clearUserData($user_data);
         $user_data['is_new'] = 0;
 
         if ($id !== null) {
             $this->id = $id;
         }
-
         // Если указана страна
         if (isset($user_data['country']) and is_array($user_data['country']) and !empty($user_data['country'])) {
             if (isset($user_data['country']['id']) and $user_data['country']['id']) {
                 $country = ClassRegistry::init('Country');
-
-                $country_id = $country->field('id', array('id' => $user_data['country']['id'], 'is_deleted' => 0));
+                $country_id = $country->field('id', array('id' => $user_data['country']['id']));
             } elseif (isset($user_data['country']['code']) and $user_data['country']['code']) {
                 $country = ClassRegistry::init('Country');
 
-                $country_id = $country->field('id', array('code' => $user_data['country']['code'], 'is_deleted' => 0));
+                $country_id = $country->field('id', array('code' => $user_data['country']['code']));
             } else {
                 return false;
             }
@@ -469,16 +453,17 @@ class User extends AppModel {
             $user_data['country_id'] = $country_id;
             $user_data['city_id'] = null;
         }
+        
         // Если указан город
         if (isset($user_data['city']) and is_array($user_data['city']) and !empty($user_data['city'])) {
             if (isset($user_data['city']['id']) and $user_data['city']['id']) {
                 $city = ClassRegistry::init('City');
 
-                $conditions = array('id' => $user_data['city']['id'], 'is_deleted' => 0);
+                $conditions = array('id' => $user_data['city']['id']);
                 if (isset($user_data['country_id'])) {
                     $country_id = $user_data['country_id'];
                 } elseif (!empty($this->id)) {
-                    $country_id = $this->field('country_id', array('id' => $this->id, 'is_deleted' => 0));
+                    $country_id = $this->field('country_id', array('id' => $this->id));
                 } else {
                     return false;
                 }
@@ -501,9 +486,13 @@ class User extends AppModel {
             $credo = ClassRegistry::init('Credo');
             $user_data['credo_id'] = $credo->getCredoId($user_data['credo']);
         }
-
+        
         try {
             $result = $this->save($user_data, true, array_keys($user_data));
+            if ($lNew) {
+        		$balanceModel = ClassRegistry::init('BalanceHistory');
+        		$balanceModel->addOperation(BalanceHistory::BH_REGISTER, 10, $this->id);
+        	}
         } catch (Exception $e) {
             $result = false;
         }
