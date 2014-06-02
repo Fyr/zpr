@@ -217,8 +217,8 @@ class UserProfilesController extends AppController {
                 $data['country']               = array();
                 $data['country']['name']       = $user['Country']['name'];
                 $data['likes']                 = $user[0]['positive_votes'];
-                $data['dislikes']              = $user[0]['negative_votes'];
-                $data['position']              = $res[0]['rating'];
+                $data['dislikes']              = intval($user[0]['negative_votes']);
+                $data['position']              = intval($res[0]['rating']);
             }
         }
 

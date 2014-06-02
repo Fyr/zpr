@@ -199,12 +199,12 @@ class User extends AppModel {
         $answer['city']['name']          = $user['City']['name'];
         $answer['city']['region_name']   = $user['City']['region_name'];
 
-        $answer['likes']    = $user[0]['likes'];
-        $answer['dislikes'] = $user[0]['dislikes'];
+        $answer['likes']    = intval($user[0]['likes']);
+        $answer['dislikes'] = intval($user[0]['dislikes']);
 
-        $answer['world_position']  = $world_rating[0]['rating'];
-        $answer['country_position'] = $country_rating[0]['rating'];
-        $answer['city_position']   = $city_rating[0]['rating'];
+        $answer['world_position']  = intval($world_rating[0]['rating']);
+        $answer['country_position'] = intval($country_rating[0]['rating']);
+        $answer['city_position']   = intval($city_rating[0]['rating']);
 
         if ($current_user_id !== 0) {
             $answer['actions'] = $this->getUserActions($current_user_id, $answer['id']);
@@ -378,12 +378,12 @@ class User extends AppModel {
             $ans['city']['name']          = $user['City']['name'];
             $ans['city']['region_name']   = $user['City']['region_name'];
 
-            $ans['likes']    = $user[0]['likes'];
-            $ans['dislikes'] = $user[0]['dislikes'];
+            $ans['likes']    = intval($user[0]['likes']);
+            $ans['dislikes'] = intval($user[0]['dislikes']);
 
-            $ans['world_position']   = $world_rating[0]['rating'];
-            $ans['country_position'] = $country_rating[0]['rating'];
-            $ans['city_position']    = $city_rating[0]['rating'];
+            $ans['world_position']   = intval($world_rating[0]['rating']);
+            $ans['country_position'] = intval($country_rating[0]['rating']);
+            $ans['city_position']    = intval($city_rating[0]['rating']);
 
             if ($current_user_id !== 0) {
                 $ans['actions'] = $this->getUserActions($current_user_id, $ans['id']);

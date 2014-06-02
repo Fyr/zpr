@@ -924,13 +924,13 @@ class UsersController extends AppController {
                     $ans['city']['region_name']   = $user['City']['region_name'];
 
                     // Временное решение для полной информации по пользователям
-                    $ans['likes']    = $user[0]['likes'];
-                    $ans['dislikes'] = $user[0]['dislikes'];
+                    $ans['likes']    = intval($user[0]['likes']);
+                    $ans['dislikes'] = intval($user[0]['dislikes']);
 
                     // Временное решение для полной информации по пользователям
-                    $ans['world_position']   = $world_rating[0]['rating'];
-                    $ans['country_position'] = $country_rating[0]['rating'];
-                    $ans['city_position']    = $city_rating[0]['rating'];
+                    $ans['world_position']   = intval($world_rating[0]['rating']);
+                    $ans['country_position'] = intval($country_rating[0]['rating']);
+                    $ans['city_position']    = intval($city_rating[0]['rating']);
 
                     $ans['actions'] = $this->User->getUserActions($this->currentUserId, $ans['id']);
 
@@ -1173,13 +1173,13 @@ class UsersController extends AppController {
                     $ans['city']['region_name']   = $user['City']['region_name'];
 
                     // Временное решение для полной информации по пользователям
-                    $ans['likes']    = $user[0]['likes'];
-                    $ans['dislikes'] = $user[0]['dislikes'];
+                    $ans['likes']    = intval($user[0]['likes']);
+                    $ans['dislikes'] = intval($user[0]['dislikes']);
 
                     // Временное решение для полной информации по пользователям
-                    $ans['world_position']   = $world_rating[0]['rating'];
-                    $ans['country_position'] = $country_rating[0]['rating'];
-                    $ans['city_position']    = $city_rating[0]['rating'];
+                    $ans['world_position']   = intval($world_rating[0]['rating']);
+                    $ans['country_position'] = intval($country_rating[0]['rating']);
+                    $ans['city_position']    = intval($city_rating[0]['rating']);
 
                     $ans['actions'] = $this->User->getUserActions($this->currentUserId, $ans['id']);
 
@@ -1619,8 +1619,8 @@ class UsersController extends AppController {
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
 
-                    $ans['likes']    = $user[0]['likes'];
-                    $ans['dislikes'] = $user[0]['dislikes'];
+                    $ans['likes']    = intval($user[0]['likes']);
+                    $ans['dislikes'] = untval($user[0]['dislikes']);
 
                     $ans['hall_of_fame_date'] = $user['HallOfFame']['achieved'];
 
