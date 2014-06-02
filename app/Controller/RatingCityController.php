@@ -1,4 +1,20 @@
 <?php
+/**
+ * Created by JetBrains PhpStorm.
+ * User: rem
+ * Date: 29.01.13
+ * Time: 19:30
+ * To change this template use File | Settings | File Templates.
+ */
+
+/**
+ * Class RatingCityController
+ * @property Country Country
+ * @property City City
+ * @property User User
+ * @property Credo Credo
+ * @property UserRating UserRating
+ */
 class RatingCityController extends AppController {
     public $uses = array('Country',
                          'City',
@@ -24,14 +40,25 @@ class RatingCityController extends AppController {
      * @param $id
      */
     public function index($id) {
-        $data = array();
-		try {
-			if (!$id) {
-	            throw new Exception('no city specified');
-        	}
+        $success = true;
+        $data    = array();
 
-            $page = ($page = intval($this->request->query('page'))) ? $page : 1;
-        	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
+        if (!$id) {
+            $this->response->statusCode(400);
+            $success = false;
+            $data    = 'no city specified';
+        }
+
+        if ($success) {
+            if (isset($this->request->query['per_page'])) {
+                $per_page = (int)$this->request->query['per_page'];
+            }
+            $per_page = (isset($per_page) and $per_page > 0) ? $per_page : 25;
+
+            if (isset($this->request->query['page'])) {
+                $page = (int)$this->request->query['page'];
+            }
+            $page = (isset($page) and $page > 0) ? $page : 1;
 
             $conditions = array(
                 'User.city_id'            => $id,
@@ -50,13 +77,15 @@ class RatingCityController extends AppController {
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id')
+                'conditions' => array('Country.id = User.country_id',
+                                      'Country.is_deleted' => 0)
             );
             $joins[] = array(
                 'table'      => $this->City->getDataSource()->fullTableName($this->City),
                 'alias'      => 'City',
                 'type'       => 'LEFT',
-                'conditions' => array('City.id = User.city_id')
+                'conditions' => array('City.id = User.city_id',
+                                      'City.is_deleted' => 0)
             );
             $joins[] = array(
                 'table'      => $this->Credo->getDataSource()->fullTableName($this->Credo),
@@ -116,10 +145,13 @@ class RatingCityController extends AppController {
                                                             'User.status',
                                                             'Credo.text',
                                                             'Country.id',
+                                                            'Country.code',
                                                             'Country.name',
                                                             'City.id',
                                                             'City.name',
                                                             'City.region_name',
+                                                            'City.longitude',
+                                                            'City.latitude',
                                                             'IFNULL(UserRating.positive_votes, 0) as likes',
                                                             'IFNULL(UserRating.negative_votes, 0) as dislikes'
                                                         ),
@@ -224,12 +256,16 @@ class RatingCityController extends AppController {
 
                     $ans['country']         = array();
                     $ans['country']['id']   = $user['Country']['id'];
+                    $ans['country']['code'] = $user['Country']['code'];
                     $ans['country']['name'] = $user['Country']['name'];
 
                     $ans['city']                  = array();
                     $ans['city']['id']            = $user['City']['id'];
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
+                    $ans['city']['position']      = array();
+                    $ans['city']['position']['x'] = $user['City']['longitude'];
+                    $ans['city']['position']['y'] = $user['City']['latitude'];
 
                     // Временное решение для полной информации по пользователям
                     $ans['likes']    = $user[0]['likes'];
@@ -257,11 +293,11 @@ class RatingCityController extends AppController {
                     'total'    => $users_count
                 );
             }
-            $this->setResponse($data);
-        } catch (Exception $e) {
-        	$this->setError($e->getMessage());
         }
 
-        
+        $answer = array('status' => ($success ? 'success' : 'error'),
+                        'data'   => $data);
+
+        $this->set(compact('answer'));
     }
 }

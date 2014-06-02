@@ -1,4 +1,20 @@
 <?php
+/**
+ * Created by JetBrains PhpStorm.
+ * User: rem
+ * Date: 21.07.13
+ * Time: 21:59
+ * To change this template use File | Settings | File Templates.
+ */
+
+/**
+ * Class ZenController
+ *
+ * @property Zen     Zen
+ * @property User    User
+ * @property City    City
+ * @property Country Country
+ */
 class ZenController extends AppController {
     public $uses = array(
         'Zen',
@@ -22,126 +38,138 @@ class ZenController extends AppController {
      *     pages {TPage}
      */
     public function index() {
-        try {
-        	
-	        $data = array();
-	
-	        $page = ($page = intval($this->request->query('page'))) ? $page : 1;
-        	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
-	
-	        $sub_db = $this->Zen->getDataSource();
-	        $sub    = $sub_db->buildStatement(
-	                         array(
-	                             'fields'     => array('Zen_sub.id'),
-	                             'table'      => $sub_db->fullTableName($this->Zen),
-	                             'alias'      => 'Zen_sub',
-	                             'limit'      => 1,
-	                             'offset'     => null,
-	                             'joins'      => array(),
-	                             'conditions' => array(
-	                                 'Zen_sub.user_id = User.id'
-	                             ),
-	                             'order'      => array('Zen_sub.modified DESC'),
-	                             'group'      => null
-	                         ),
-	                         $this->Zen
-	        );
-	
-	        $joins   = array();
-	        $joins[] = array(
-	            'table'      => $this->Zen->getDataSource()->fullTableName($this->Zen),
-	            'alias'      => 'Zen',
-	            'type'       => 'INNER',
-	            'conditions' => array('Zen.user_id = User.id',
-	                                  "Zen.id = ({$sub})")
-	        );
-	        $joins[] = array(
-	            'table'      => $this->City->getDataSource()->fullTableName($this->City),
-	            'alias'      => 'City',
-	            'type'       => 'LEFT',
-	            'conditions' => array('City.id = User.city_id')
-	        );
-	        $joins[] = array(
-	            'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
-	            'alias'      => 'Country',
-	            'type'       => 'LEFT',
-	            'conditions' => array('Country.id = User.country_id')
-	        );
-	
-	        $conditions = array('User.is_ready' => 1);
-	
-	        $zen_count = $this->User->find('count',
-	                                       array(
-	                                           'conditions' => $conditions,
-	                                           'joins'      => $joins
-	                                       ));
-	
-	        if (($page - 1) * $per_page >= $zen_count && $zen_count > 0) {
-	            $data['messages'] = array();
-	            $data['pages']    = array(
-	                'per_page' => $per_page,
-	                'page'     => $page,
-	                'total'    => $zen_count
-	            );
-	        } elseif ($zen_count > 0) {
-	            $data['messages'] = array();
-	            $data['pages']    = array('per_page' => $per_page,
-	                                      'page'     => $page,
-	                                      'total'    => $zen_count);
-	
-	            $zens = $this->User->find('all',
-	                                      array(
-	                                          'conditions' => $conditions,
-	                                          'fields'     => array(
-	                                              'Zen.id',
-	                                              'Zen.text',
-	                                              'Zen.modified',
-	                                              'User.id',
-	                                              'User.name',
-	                                              'City.id',
-	                                              'City.name',
-	                                              'City.region_name',
-	                                              'Country.id',
-	                                              'Country.name',
-	                                          ),
-	                                          'joins'      => $joins,
-	                                          'order'      => array('Zen.modified DESC'),
-	                                          'limit'      => $per_page,
-	                                          'offset'     => ($page - 1) * $per_page
-	                                      ));
-	
-	            foreach ($zens as $zen) {
-	                $ans         = array();
-	                $ans['id']   = $zen['Zen']['id'];
-	                $ans['text'] = htmlspecialchars($zen['Zen']['text']);
-	                $ans['date'] = $zen['Zen']['modified'];
-	
-	                $ans['user']         = array();
-	                $ans['user']['id']   = $zen['User']['id'];
-	                $ans['user']['name'] = $zen['User']['name'];
-	
-	                $ans['user']['city']                  = array();
-	                $ans['user']['city']['id']            = $zen['City']['id'];
-	                $ans['user']['city']['name']          = $zen['City']['name'];
-	                $ans['user']['city']['region_name']   = $zen['City']['region_name'];
-	
-	                $ans['user']['country']         = array();
-	                $ans['user']['country']['id']   = $zen['Country']['id'];
-	                $ans['user']['country']['name'] = $zen['Country']['name'];
-	
-	                $data['messages'][] = $ans;
-	            }
-	        } else {
-	            $data['messages'] = array();
-	            $data['pages']    = array('per_page' => $per_page,
-	                                      'page'     => $page,
-	                                      'total'    => $zen_count);
-	        }
+        $success = true;
+        $data    = array();
 
-        	$this->setResponse($data);
-        } catch (Exception $e) {
-        	$this->setError($e->getMessage());
+        if (isset($this->request->query['per_page'])) {
+            $per_page = (int)$this->request->query['per_page'];
         }
+        $per_page = (isset($per_page) and $per_page > 0) ? $per_page : 25;
+
+        if (isset($this->request->query['page'])) {
+            $page = (int)$this->request->query['page'];
+        }
+        $page = (isset($page) and $page > 0) ? $page : 1;
+
+        $sub_db = $this->Zen->getDataSource();
+        $sub    = $sub_db->buildStatement(
+                         array(
+                             'fields'     => array('Zen_sub.id'),
+                             'table'      => $sub_db->fullTableName($this->Zen),
+                             'alias'      => 'Zen_sub',
+                             'limit'      => 1,
+                             'offset'     => null,
+                             'joins'      => array(),
+                             'conditions' => array(
+                                 'Zen_sub.user_id = User.id'
+                             ),
+                             'order'      => array('Zen_sub.modified DESC'),
+                             'group'      => null
+                         ),
+                         $this->Zen
+        );
+
+        $joins   = array();
+        $joins[] = array(
+            'table'      => $this->Zen->getDataSource()->fullTableName($this->Zen),
+            'alias'      => 'Zen',
+            'type'       => 'INNER',
+            'conditions' => array('Zen.user_id = User.id',
+                                  "Zen.id = ({$sub})")
+        );
+        $joins[] = array(
+            'table'      => $this->City->getDataSource()->fullTableName($this->City),
+            'alias'      => 'City',
+            'type'       => 'LEFT',
+            'conditions' => array('City.id = User.city_id')
+        );
+        $joins[] = array(
+            'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
+            'alias'      => 'Country',
+            'type'       => 'LEFT',
+            'conditions' => array('Country.id = User.country_id',
+                                  'Country.is_deleted' => 0)
+        );
+
+        $conditions = array('User.is_ready' => 1);
+
+        $zen_count = $this->User->find('count',
+                                       array(
+                                           'conditions' => $conditions,
+                                           'joins'      => $joins
+                                       ));
+
+        if (($page - 1) * $per_page >= $zen_count && $zen_count > 0) {
+            $data['messages'] = array();
+            $data['pages']    = array(
+                'per_page' => $per_page,
+                'page'     => $page,
+                'total'    => $zen_count
+            );
+        } elseif ($zen_count > 0) {
+            $data['messages'] = array();
+            $data['pages']    = array('per_page' => $per_page,
+                                      'page'     => $page,
+                                      'total'    => $zen_count);
+
+            $zens = $this->User->find('all',
+                                      array(
+                                          'conditions' => $conditions,
+                                          'fields'     => array(
+                                              'Zen.id',
+                                              'Zen.text',
+                                              'Zen.modified',
+                                              'User.id',
+                                              'User.name',
+                                              'City.id',
+                                              'City.name',
+                                              'City.region_name',
+                                              'City.longitude',
+                                              'City.latitude',
+                                              'Country.id',
+                                              'Country.code',
+                                              'Country.name',
+                                          ),
+                                          'joins'      => $joins,
+                                          'order'      => array('Zen.modified DESC'),
+                                          'limit'      => $per_page,
+                                          'offset'     => ($page - 1) * $per_page
+                                      ));
+
+            foreach ($zens as $zen) {
+                $ans         = array();
+                $ans['id']   = $zen['Zen']['id'];
+                $ans['text'] = htmlspecialchars($zen['Zen']['text']);
+                $ans['date'] = $zen['Zen']['modified'];
+
+                $ans['user']         = array();
+                $ans['user']['id']   = $zen['User']['id'];
+                $ans['user']['name'] = $zen['User']['name'];
+
+                $ans['user']['city']                  = array();
+                $ans['user']['city']['id']            = $zen['City']['id'];
+                $ans['user']['city']['name']          = $zen['City']['name'];
+                $ans['user']['city']['region_name']   = $zen['City']['region_name'];
+                $ans['user']['city']['position']      = array();
+                $ans['user']['city']['position']['x'] = $zen['City']['longitude'];
+                $ans['user']['city']['position']['y'] = $zen['City']['latitude'];
+
+                $ans['user']['country']         = array();
+                $ans['user']['country']['id']   = $zen['Country']['id'];
+                $ans['user']['country']['code'] = $zen['Country']['code'];
+                $ans['user']['country']['name'] = $zen['Country']['name'];
+
+                $data['messages'][] = $ans;
+            }
+        } else {
+            $data['messages'] = array();
+            $data['pages']    = array('per_page' => $per_page,
+                                      'page'     => $page,
+                                      'total'    => $zen_count);
+        }
+
+        $answer = array('status' => ($success ? 'success' : 'error'), 'data' => $data);
+        $this->set(compact('answer'));
     }
 
     /**

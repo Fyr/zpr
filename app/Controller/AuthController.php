@@ -12,7 +12,7 @@
  * @property User User
  */
 class AuthController extends AppController {
-    public $uses = array('User', 'UserDefaults', 'UserRating');
+    public $uses = array('User');
     public $components = array('RequestHandler');
 
     protected function __getJSON($url) {
@@ -100,17 +100,7 @@ class AuthController extends AppController {
             $user_data['ready'] = false;
 
             try {
-            	$defaults = $this->UserDefaults->getList();
-            	extract($defaults);
-                $user = $this->User->add(array_merge(compact('credo_id', 'status'), $user_data));
-                if ($user) {
-                    $user_rating_data               = array();
-                    $user_rating_data['user_id']    = $user['id'];
-                    $user_rating_data = array_merge(compact('positive_votes'), $user_rating_data);
-
-                    $this->UserRating->save($user_rating_data);
-                }
-                
+                $user = $this->User->add($user_data);
             } catch (Exception $e) {
                 $user = false;
             }

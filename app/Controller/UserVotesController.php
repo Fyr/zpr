@@ -1,4 +1,20 @@
 <?php
+/**
+ * Created by JetBrains PhpStorm.
+ * User: rem
+ * Date: 22.07.12
+ * Time: 15:47
+ * To change this template use File | Settings | File Templates.
+ */
+
+/**
+ * Class UserVotesController
+ *
+ * @property User       User
+ * @property UserRating UserRating
+ * @property UserVote   UserVote
+ * @property UserLock   UserLock
+ */
 class UserVotesController extends AppController {
     public $uses = array(
         'User',
@@ -116,12 +132,5 @@ class UserVotesController extends AppController {
 
         $answer = array('status' => ($success ? 'success' : 'error'), 'data' => $data);
         $this->set(compact('answer'));
-    }
-    
-    function getVotedList($vote_type, $user_id = 0) {
-    	$vote_type = ($vote_type == 'dislikes') ? 'dislikes' : 'likes';
-    	$user_id = (intval($user_id)) ? intval($user_id) : $this->currentUserId;
-    	$answer = array('status' => 'success', 'data' => $this->UserVote->getVotedUsersList($user_id, $vote_type));
-    	$this->set(compact('answer'));
     }
 }

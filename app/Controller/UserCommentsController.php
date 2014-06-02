@@ -40,20 +40,32 @@ class UserCommentsController extends AppController {
      * @param $user_id
      */
     public function index($user_id) {
-        try {
-        	$data    = array();
+        $success = true;
+        $data    = array();
 
-	        if (!$user_id) {
-	        	throw new Exception('no user specified');
-	        } else {
-	            $user = $this->User->findById($user_id);
-	            if (!$user) {
-	            	throw new Exception('bad user request');
-	            }
-	        }
+        if (!$user_id) {
+            $this->response->statusCode(400);
+            $success = false;
+            $data    = 'no user specified';
+        } else {
+            $user = $this->User->findById($user_id);
+            if (!$user or empty($user)) {
+                $this->response->statusCode(400);
+                $success = false;
+                $data    = 'bad user request';
+            }
+        }
 
-            $page = ($page = intval($this->request->query('page'))) ? $page : 1;
-        	$per_page = ($per_page = intval($this->request->query('per_page'))) ? $per_page : 25;
+        if ($success) {
+            if (isset($this->request->query['per_page'])) {
+                $per_page = (int)$this->request->query['per_page'];
+            }
+            $per_page = (isset($per_page) and $per_page > 0) ? $per_page : 25;
+
+            if (isset($this->request->query['page'])) {
+                $page = (int)$this->request->query['page'];
+            }
+            $page = (isset($page) and $page > 0) ? $page : 1;
 
             $joins = array();
             $joins[] = array(
@@ -72,7 +84,8 @@ class UserCommentsController extends AppController {
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id')
+                'conditions' => array('Country.id = User.country_id',
+                                      'Country.is_deleted' => 0)
             );
 
             $conditions = array('UserComment.participant_id' => $user_id,
@@ -81,6 +94,7 @@ class UserCommentsController extends AppController {
 
             $comments_count = $this->UserComment->find('count', array('conditions' => $conditions,
                                                                       'joins'      => $joins));
+
             $comment_type_count = $this->UserComment->find(
                 'first',
                 array(
@@ -129,7 +143,10 @@ class UserCommentsController extends AppController {
                                                               'City.id',
                                                               'City.name',
                                                               'City.region_name',
+                                                              'City.longitude',
+                                                              'City.latitude',
                                                               'Country.id',
+                                                              'Country.code',
                                                               'Country.name',
                                                           ),
                                                           'joins'      => $joins,
@@ -137,6 +154,7 @@ class UserCommentsController extends AppController {
                                                           'limit'      => $per_page,
                                                           'offset'     => ($page - 1) * $per_page
                                                      ));
+
                 foreach ($comments as $comment) {
                     $ans = array();
 
@@ -154,9 +172,13 @@ class UserCommentsController extends AppController {
                     $ans['comment']['user']['city']['id']            = $comment['City']['id'];
                     $ans['comment']['user']['city']['name']          = $comment['City']['name'];
                     $ans['comment']['user']['city']['region_name']   = $comment['City']['region_name'];
+                    $ans['comment']['user']['city']['position']      = array();
+                    $ans['comment']['user']['city']['position']['x'] = $comment['City']['longitude'];
+                    $ans['comment']['user']['city']['position']['y'] = $comment['City']['latitude'];
 
                     $ans['comment']['user']['country']         = array();
                     $ans['comment']['user']['country']['id']   = $comment['Country']['id'];
+                    $ans['comment']['user']['country']['code'] = $comment['Country']['code'];
                     $ans['comment']['user']['country']['name'] = $comment['Country']['name'];
 
                     // Получим ответы на комментарий
@@ -185,39 +207,39 @@ class UserCommentsController extends AppController {
                 $data['stats'] = array('positive' => $positive_count,
                                        'negative' => $negative_count);
             }
-            
-	        if (isset($data['comments'])) {
-	            $users = array();
-	            // Подтянем данные пользователей, которые писали ответы на комментарии
-	            foreach ($data['comments'] as &$comment) {
-	                unset($reply);
-	                foreach ($comment['comment']['replies'] as &$reply) {
-	                    if (!isset($users[$reply['user_id']])) {
-	                        $users[$reply['user_id']] = array();
-	                    }
-	
-	                    $users[$reply['user_id']][] = &$reply;
-	                }
-	            }
-	
-	            if (!empty($users)) {
-	                $users_full = $this->User->getUsers(array_keys($users), false, array(), true, $this->currentUserId);
-	                foreach ($users_full as $user) {
-	                    $user_id = $user['id'];
-	
-	                    foreach ($users[$user_id] as &$reply) {
-	                        array_splice($reply, 2, 1);
-	                        $first_array = array_splice($reply, 0, 2);
-	                        $reply       = array_merge($first_array, array('user' => $user), $reply);
-	                    }
-	                }
-	            }
-	        }
-
-        	$this->setResponse($data);
-        } catch (Exception $e) {
-        	$this->setError($e->getMessage());
         }
+
+        if ($success && isset($data['comments'])) {
+            $users = array();
+            // Подтянем данные пользователей, которые писали ответы на комментарии
+            foreach ($data['comments'] as &$comment) {
+                unset($reply);
+                foreach ($comment['comment']['replies'] as &$reply) {
+                    if (!isset($users[$reply['user_id']])) {
+                        $users[$reply['user_id']] = array();
+                    }
+
+                    $users[$reply['user_id']][] = &$reply;
+                }
+            }
+
+            if (!empty($users)) {
+                $users_full = $this->User->getUsers(array_keys($users), false, array(), true, $this->currentUserId);
+
+                foreach ($users_full as $user) {
+                    $user_id = $user['id'];
+
+                    foreach ($users[$user_id] as &$reply) {
+                        array_splice($reply, 2, 1);
+                        $first_array = array_splice($reply, 0, 2);
+                        $reply       = array_merge($first_array, array('user' => $user), $reply);
+                    }
+                }
+            }
+        }
+
+        $answer = array('status' => ($success ? 'success' : 'error'), 'data'   => $data);
+        $this->set(compact('answer'));
     }
 
     /**

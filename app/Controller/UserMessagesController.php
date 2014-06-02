@@ -1,4 +1,19 @@
 <?php
+/**
+ * Created by JetBrains PhpStorm.
+ * User: rem
+ * Date: 13.07.13
+ * Time: 13:28
+ * To change this template use File | Settings | File Templates.
+ */
+
+/**
+ * Class UserMessagesController
+ * @property User        User
+ * @property UserMessage UserMessage
+ * @property City        City
+ * @property ChatMessage ChatMessage
+ */
 class UserMessagesController extends AppController {
     public $uses = array('User',
                          'UserMessage',

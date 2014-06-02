@@ -1,19 +1,6 @@
 <?= $this->Html->script('jquery-1.8.2.min.js'); ?>
 
 <ul>
-	<li>
-		<?= $this->Html->link('Настройки', '#', array('onclick' => "\$('#settings').slideToggle()")); ?>
-		<div id="settings" style="display: none;">
-<?
-	echo $this->Form->create('UserDefaults'); // , array('url' => $this->Html->url(array('controller' => 'Home', 'action' => 'saveSettings')))
-	echo $this->Form->input('UserDefaults.status', array('label' => 'Статус по умолчанию'));
-	echo $this->Form->input('UserDefaults.credo_id', array('label' => 'Кредо по умолчанию', 'options' => $credoOptions));
-	echo $this->Form->input('UserDefaults.positive_votes', array('label' => 'Рейтинг по умолчанию', 'style' => 'width: 30%'));
-	echo $this->Form->submit('Сохранить');
-	echo $this->Form->end();
-?>
-		</div>
-	</li>
     <li><?= $this->Html->link('Получить данные счётчиков', '/counters'); ?></li>
     <li><?= $this->Html->link('Поиск пользователей', '/users?q=s&per_page=2&page=1'); ?></li>
     <li><?= $this->Html->link('Земляки пользователя по стране', '/users/1/neighbors/country?per_page=2&page=1'); ?></li>
@@ -78,6 +65,7 @@
                                            'user][status'        => 'Some status',
                                            'user][email'         => 'blah@gmail.com',
                                            'user][credo'         => 'Some credo',
+                                           'user][country][code' => 'BY',
                                            'picture][url'        => 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-ash3/t5/275272_100001903680558_1106498244_q.jpg',
                                            'picture][rect][x'    => 0,
                                            'picture][rect][y'    => 0,
@@ -275,7 +263,6 @@
                                        )
                                   )); ?>
     </li>
-    <li><?= $this->Html->link('Получить список голосовавших', '/userVotes/getVotedList/likes/0'); ?></li>
 
     <br>
 
@@ -336,61 +323,9 @@ Vivamus ut dui non sem suscipit pretium non ac lorem. Mauris egestas, metus euis
                                    )
                               )); ?>
     </li>
+
     <br>
-    <li>
-    	<?= $this->Html->link('Получить баланс по юзеру', 'javascript:void(0)', array('onclick' => "\$('#getBalance').slideToggle()")); ?>
-		<div id="getBalance" style="display: none;">
-<?
-	echo $this->Form->create('GetBalance', array('url' => '#')); 
-	echo $this->Form->input('user_id', array('label' => 'User ID (0 - текущий)', 'type' => 'text', 'style' => 'width: 30%'));
-	echo $this->Form->input('points', array('label' => 'Кол-во ИВ', 'style' => 'width: 30%', 'readonly' => true));
-	echo $this->Form->submit('Отправить запрос', array('onclick' => 'showBalance(); return false;'));
-	echo $this->Form->end();
-?>
-<script type="text/javascript">
-function showBalance() {
-	$.get('/users/' + $('#GetBalanceUserId').val(), null, function(response){
-		if (response && response.status) {
-			if (response.status == 'success') {
-				$('#GetBalancePoints').val(response.data.balance);
-			} else {
-				alert(data);
-			}
-		} else {
-			alert('Unknown server error!');
-		}
-	}, 'json');
-}
-</script>
-		</div>
-    </li>
-    <li>
-    	<?= $this->Html->link('Операция с балансом', 'javascript:void(0)', array('onclick' => "\$('#balanceOper').slideToggle()")); ?>
-		<div id="balanceOper" style="display: none;">
-<?
-	echo $this->Form->create('BalanceHistory', array('url' => array('controller' => 'Home', 'action' => 'balanceModify'))); // , array('url' => $this->Html->url(array('controller' => 'Home', 'action' => 'saveSettings')))
-	echo $this->Form->input('user_id', array('label' => 'User ID (0 - текущий)', 'type' => 'text', 'style' => 'width: 30%'));
-	echo $this->Form->input('oper_type', array('label' => 'Операция', 'options' => $balanceOperOptions));
-	echo $this->Form->input('points', array('label' => 'Добавить к балансу кол-во ИВ', 'style' => 'width: 30%'));
-	echo $this->Form->input('comment', array('label' => 'Коммент', 'style' => 'width: 30%'));
-	echo $this->Form->submit('Сохранить');
-	echo $this->Form->end();
-?>
-		</div>
-    </li>
-    <li>
-    	<?= $this->Html->link('Установка баланса', 'javascript:void(0)', array('onclick' => "\$('#setBalance').slideToggle()")); ?>
-		<div id="setBalance" style="display: none;">
-			<b>Внимание!</b> Данная функция изменяет баланс юзера не меняя истории операций по балансу.
-<?
-	echo $this->Form->create('Balance', array('url' => array('controller' => 'Home', 'action' => 'setBalance'))); // , array('url' => $this->Html->url(array('controller' => 'Home', 'action' => 'saveSettings')))
-	echo $this->Form->input('user_id', array('label' => 'User ID (0 - текущий)', 'type' => 'text', 'style' => 'width: 30%'));
-	echo $this->Form->input('points', array('label' => 'Кол-во ИВ', 'style' => 'width: 30%'));
-	echo $this->Form->submit('Сохранить');
-	echo $this->Form->end();
-?>
-		</div>
-    </li>
+    <br>
     <br>
 
     <li>В процессе тестирования</li>
