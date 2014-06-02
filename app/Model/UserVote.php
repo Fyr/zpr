@@ -242,13 +242,18 @@ JOIN users AS u ON u.id = uv.user_id
 WHERE participant_id = '.$userID.' AND vote_type = 1 AND '.$vote_exp.'
 GROUP BY user_id
 ORDER BY votes DESC');
-    	$aList = array();
-    	foreach($res as $row) {
-    		$user_id = $row['uv']['user_id'];
-    		$user_name = $row['u']['name'];
-    		$votes = $row[0]['votes'];
-    		$aList[] = compact('user_id', 'user_name', 'votes');
-    	}
+        $aList = array();
+        if ($res) {;
+            foreach($res as $row) {
+                    $user_id = $row['uv']['user_id'];
+                    $user_name = $row['u']['name'];
+                    $votes = $row[0]['votes'];
+                    $aList[] = compact('user_id', 'user_name', 'votes');
+            }
+        } else {
+            $votes = 0;
+            $aList[] = compact('votes');
+        }
     	return $aList;
     }
 }
