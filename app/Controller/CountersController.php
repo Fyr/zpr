@@ -60,7 +60,6 @@ class CountersController extends AppController {
                                              array(
                                                   'conditions' => array(
                                                       'UserComment.participant_id' => $this->currentUserId,
-                                                      'UserComment.parent_id'      => null,
                                                       'UserComment.deleted'        => 0
                                                   ),
                                                   'fields'     => array(
