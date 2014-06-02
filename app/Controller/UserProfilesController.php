@@ -181,7 +181,6 @@ class UserProfilesController extends AppController {
                                                                                   'User.post_id',
                                                                                   'User.last_position',
                                                                                   'Country.id',
-                                                                                  'Country.code',
                                                                                   'IFNULL(UserRating.positive_votes, 0) as positive_votes',
                                                                                   'IFNULL(UserRating.negative_votes, 0) as negative_votes'),
                                                             'joins'      => $joins));

@@ -756,8 +756,7 @@ class UsersController extends AppController {
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id',
-                                      'Country.is_deleted' => 0)
+                'conditions' => array('Country.id = User.country_id')
             );
             $joins[] = array(
                 'table'      => $this->City->getDataSource()->fullTableName($this->City),
@@ -810,13 +809,10 @@ class UsersController extends AppController {
                                                            'User.status',
                                                            'Credo.text',
                                                            'Country.id',
-                                                           'Country.code',
                                                            'Country.name',
                                                            'City.id',
                                                            'City.name',
                                                            'City.region_name',
-                                                           'City.longitude',
-                                                           'City.latitude',
                                                            'IFNULL(UserRating.positive_votes, 0) as likes',
                                                            'IFNULL(UserRating.negative_votes, 0) as dislikes'
                                                        ),
@@ -926,9 +922,6 @@ class UsersController extends AppController {
                     $ans['city']['id']            = $user['City']['id'];
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
-                    $ans['city']['position']      = array();
-                    $ans['city']['position']['x'] = $user['City']['longitude'];
-                    $ans['city']['position']['y'] = $user['City']['latitude'];
 
                     // Временное решение для полной информации по пользователям
                     $ans['likes']    = $user[0]['likes'];
@@ -1013,15 +1006,13 @@ class UsersController extends AppController {
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id',
-                                      'Country.is_deleted' => 0)
+                'conditions' => array('Country.id = User.country_id')
             );
             $joins[] = array(
                 'table'      => $this->City->getDataSource()->fullTableName($this->City),
                 'alias'      => 'City',
                 'type'       => 'LEFT',
-                'conditions' => array('City.id = User.city_id',
-                                      'City.is_deleted' => 0)
+                'conditions' => array('City.id = User.city_id')
             );
             $joins[] = array(
                 'table'      => $this->Credo->getDataSource()->fullTableName($this->Credo),
@@ -1068,13 +1059,10 @@ class UsersController extends AppController {
                                                            'User.status',
                                                            'Credo.text',
                                                            'Country.id',
-                                                           'Country.code',
                                                            'Country.name',
                                                            'City.id',
                                                            'City.name',
                                                            'City.region_name',
-                                                           'City.longitude',
-                                                           'City.latitude',
                                                            'IFNULL(UserRating.positive_votes, 0) as likes',
                                                            'IFNULL(UserRating.negative_votes, 0) as dislikes'
                                                        ),
@@ -1177,16 +1165,12 @@ class UsersController extends AppController {
 
                     $ans['country']         = array();
                     $ans['country']['id']   = $user['Country']['id'];
-                    $ans['country']['code'] = $user['Country']['code'];
                     $ans['country']['name'] = $user['Country']['name'];
 
                     $ans['city']                  = array();
                     $ans['city']['id']            = $user['City']['id'];
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
-                    $ans['city']['position']      = array();
-                    $ans['city']['position']['x'] = $user['City']['longitude'];
-                    $ans['city']['position']['y'] = $user['City']['latitude'];
 
                     // Временное решение для полной информации по пользователям
                     $ans['likes']    = $user[0]['likes'];
@@ -1538,8 +1522,7 @@ class UsersController extends AppController {
                 'table'      => $this->Country->getDataSource()->fullTableName($this->Country),
                 'alias'      => 'Country',
                 'type'       => 'LEFT',
-                'conditions' => array('Country.id = User.country_id',
-                                      'Country.is_deleted' => 0)
+                'conditions' => array('Country.id = User.country_id')
             );
             $joins[] = array(
                 'table'      => $this->City->getDataSource()->fullTableName($this->City),
@@ -1599,13 +1582,10 @@ class UsersController extends AppController {
                                                            'User.status',
                                                            'Credo.text',
                                                            'Country.id',
-                                                           'Country.code',
                                                            'Country.name',
                                                            'City.id',
                                                            'City.name',
                                                            'City.region_name',
-                                                           'City.longitude',
-                                                           'City.latitude',
                                                            'IFNULL(UserRating.positive_votes, 0) as likes',
                                                            'IFNULL(UserRating.negative_votes, 0) as dislikes',
                                                            'HallOfFame.achieved'
@@ -1632,16 +1612,12 @@ class UsersController extends AppController {
 
                     $ans['country']         = array();
                     $ans['country']['id']   = $user['Country']['id'];
-                    $ans['country']['code'] = $user['Country']['code'];
                     $ans['country']['name'] = $user['Country']['name'];
 
                     $ans['city']                  = array();
                     $ans['city']['id']            = $user['City']['id'];
                     $ans['city']['name']          = $user['City']['name'];
                     $ans['city']['region_name']   = $user['City']['region_name'];
-                    $ans['city']['position']      = array();
-                    $ans['city']['position']['x'] = $user['City']['longitude'];
-                    $ans['city']['position']['y'] = $user['City']['latitude'];
 
                     $ans['likes']    = $user[0]['likes'];
                     $ans['dislikes'] = $user[0]['dislikes'];
