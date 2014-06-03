@@ -236,16 +236,16 @@ class UserVote extends AppModel {
     
     public function getVotedUsersList($userID, $vote_type) {
     	$vote_exp = ($vote_type == 'dislikes') ? 'vote < 0' : 'vote > 0';
-    	$res = $this->query('SELECT user_id, u.name, SUM(IF('.$vote_exp.', ABS(vote), 0)) AS votes
+    	$res = $this->query('SELECT u.id, u.name, SUM(IF('.$vote_exp.', ABS(vote), 0)) AS votes
 FROM user_votes AS uv
 JOIN users AS u ON u.id = uv.user_id
 WHERE participant_id = '.$userID.' AND vote_type = 1 AND '.$vote_exp.'
 GROUP BY user_id
 ORDER BY votes DESC');
         $aList = array();
-        if ($res) {;
+        if ($res) {
             foreach($res as $row) {
-                    $user_id = $row['uv']['user_id'];
+                    $user_id = $row['u']['id'];
                     $user_name = $row['u']['name'];
                     $votes = $row[0]['votes'];
                     $aList[] = compact('user_id', 'user_name', 'votes');
