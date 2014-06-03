@@ -12,7 +12,7 @@
  * @property User User
  */
 class AuthController extends AppController {
-    public $uses = array('User', 'UserDefaults', 'UserRating');
+    public $uses = array('User', 'UserDefaults', 'UserRating', 'BalanceHistory');
     public $components = array('RequestHandler');
 
     protected function __getJSON($url) {
@@ -62,6 +62,9 @@ class AuthController extends AppController {
     }
 
     private function __auth($service, $user_service_id, $api_token, $api_token_expires = null) {
+        App::uses('HttpSocket', 'Network/Http');
+        $Http = new HttpSocket();
+        
         $success = true;
         $data    = array();
 
@@ -73,7 +76,7 @@ class AuthController extends AppController {
         }
 
         $user = $this->User->find('first', array('conditions' => $conditions,
-                                                 'fields'     => array('id')));
+                                                 'fields'     => array('id', 'vk_id')));
 
         if (!empty($user) and isset($user['User']) and !empty($user['User'])) {
             $data = $this->User->getUser($user['User']['id'], false);
@@ -85,6 +88,32 @@ class AuthController extends AppController {
             }
 
             // TODO: преверяем была ли сегодня авторизация, иначе начисляем бонус
+            
+            // Проверяем есть ли пользователь в группе ВК
+            $inGroup = json_decode(
+                        $Http->get('https://api.vk.com/method/groups.isMember',
+                            array(
+                                'gid' => 'zupersu',
+                                'uid' => $user['User']['vk_id']
+                            )
+                        )
+                    );
+            if($inGroup->response == 1){
+                //Проверяем получал ли пользователь ИВ за вступление в группу
+                $result = $this->BalanceHistory->find('count',
+                        array(
+                            'conditions' => array(
+                                'user_id' => $user['User']['id'],
+                                'oper_type' => 3
+                            )
+                        )
+                );
+                if(!$result){
+                    //Если не получал - начисляем
+                    $operType = $this->BalanceHistory->getOperationOptions();
+                    $this->BalanceHistory->addOperation(3, 20, $user['User']['id'], $operType[3]);
+                }
+            }
         } else {
             // Создадим нашего пользователя
             $user_data = array();

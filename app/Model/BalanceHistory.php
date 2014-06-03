@@ -1,6 +1,8 @@
 <?php
 class BalanceHistory extends AppModel {
 	const BH_REGISTER = 1;
+        const BH_DAILY = 2;
+        const BH_GROUP_VK = 3;
 	const BH_SYS_CHANGE = 100;
 	
     public $useTable = 'balance_history';
@@ -9,7 +11,9 @@ class BalanceHistory extends AppModel {
     
     public function getOperationOptions() {
     	return array(
-    		self::BH_REGISTER => 'Изначальное начисление ИВ при регистрации',
+    		self::BH_REGISTER   => 'Изначальное начисление ИВ при регистрации',
+                self::BH_DAILY      => 'Ежедневное начисление ИВ',
+                self::BH_GROUP_VK   => 'Начисление ИВ за присоединение к группе в ВКонтакте',
     		self::BH_SYS_CHANGE => 'Изменение баланса админом'
     	);
     }
