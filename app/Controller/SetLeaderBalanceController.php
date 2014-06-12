@@ -65,7 +65,7 @@ class SetLeaderBalanceController extends AppController {
                 if ($lastDate != 0 && (time() - strtotime($lastDate) < 86400)) {
                     /* ...проверим сколько потратил (24ч) */
                     $sumOut = ($this->BalanceHistory->getPointsSpent($dataLeader[$key]['id'])) * -1;
-                    if ($sumOut >= $operBonus[$dataLeader[$key]['type']]) {
+                    if ($sumOut > 0) {
                         /* Если потратил больше чем получил за лидерство - начисляем */
                         $addBonus = true;
                     }
