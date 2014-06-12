@@ -62,9 +62,6 @@ class AuthController extends AppController {
     }
 
     private function __auth($service, $user_service_id, $api_token, $api_token_expires = null) {
-        App::uses('HttpSocket', 'Network/Http');
-        $Http = new HttpSocket();
-        
         $success = true;
         $data    = array();
 
@@ -90,28 +87,27 @@ class AuthController extends AppController {
             // TODO: преверяем была ли сегодня авторизация, иначе начисляем бонус
             
             // Проверяем есть ли пользователь в группе ВК
-            $inGroup = json_decode(
-                        $Http->get('https://api.vk.com/method/groups.isMember',
-                            array(
-                                'gid' => 'zupersu',
-                                'uid' => $user['User']['vk_id']
-                            )
-                        )
-                    );
-            if($inGroup->response == 1){
+            $inGroup = $this->Auth->isMemberVk($user['User']['vk_id']);
+            
+            if(intval($inGroup->response)){
                 //Проверяем получал ли пользователь ИВ за вступление в группу
-                $result = $this->BalanceHistory->find('count',
-                        array(
-                            'conditions' => array(
-                                'user_id' => $user['User']['id'],
-                                'oper_type' => 3
-                            )
-                        )
-                );
+                $result = $this->BalanceHistory->find('count', array(
+                    'conditions' => array(
+                        'user_id' => $user['User']['id'], 
+                        'oper_type' => BalanceHistory::BH_GROUP_VK
+                    )
+                    
+                ));
                 if(!$result){
                     //Если не получал - начисляем
+                    $operBonus = $this->BalanceHistory->getOperationBonus();
                     $operType = $this->BalanceHistory->getOperationOptions();
-                    $this->BalanceHistory->addOperation(3, 20, $user['User']['id'], $operType[3]);
+                    $this->BalanceHistory->addOperation(
+                        BalanceHistory::BH_GROUP_VK, 
+                        $operBonus[BalanceHistory::BH_GROUP_VK], 
+                        $user['User']['id'], 
+                        $operType[BalanceHistory::BH_GROUP_VK]
+                    );
                 }
             }
         } else {

@@ -135,4 +135,16 @@ class Auth extends AppModel {
 
         return true;
     }
+    
+    /**
+     * Проверяем наличие пользователя в группе ВК
+     * @param int $vk_id
+     * @return obj
+     */
+    function isMemberVk($vk_id) {
+        App::uses('HttpSocket', 'Network/Http');
+        $Http = new HttpSocket();
+        $inGroup = $Http->get('https://api.vk.com/method/groups.isMember', array( 'gid' => 'zupersu', 'uid' => $vk_id ));
+        return json_decode($inGroup);
+    }
 }
