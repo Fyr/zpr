@@ -14,10 +14,7 @@ class UserRating extends AppModel {
      * @return array
      */
     public function getWorldLeader() {
-        $data = $this->find('first', array(
-            'fields' => array('user_id, (positive_votes - negative_votes) AS credits'),
-            'order' => array('credits' => 'DESC')
-        ));
+        $data = $this->getCountriesLeader(true);
         return $data;
     }
     
@@ -29,7 +26,7 @@ class UserRating extends AppModel {
         $data = $this->query(
             'SELECT User.*, points
             FROM (
-                SELECT a.id, a.credo_id, (ur.positive_votes - ur.negative_votes) AS points
+                SELECT a.id, a.credo_id, (ur.positive_votes + ur.negative_votes) AS points
                 FROM users AS a
                 LEFT JOIN user_ratings AS ur ON (a.id = ur.user_id)
                 ORDER BY points DESC
@@ -43,39 +40,40 @@ class UserRating extends AppModel {
     
     /**
      * Получаем лидеров по каждой стране
-     * @param array $exception - массив ID пользователей для исключения
+     * @param bollean $first = если true вернем только первую строку
      * @return array
      */
-    public function getCountriesLeader($exception = array()) {
-        return $this->getQueryLeader($exception, 'country_id');
+    public function getCountriesLeader($first = false) {
+        return $this->getQueryLeader('country_id', $first);
     }
     
     /**
      * Получаем лидеров по каждому городу
-     * @param array $exception - массив ID пользователей для исключения
+     * @param array $countries - страны для поиска лидеров по городам
      * @return array
      */
-    public function getCitiesLeader($exception = array()) {
-        return $this->getQueryLeader($exception, 'city_id');
+    public function getCitiesLeader() {
+        return $this->getQueryLeader('city_id');
     }
     
     /**
      * Получаем лидеров по городам или странам
-     * @param array $exception - массив ID пользователей для исключения
      * @param str $column - country_id или city_id
+     * @param boolean $first - вернуть только первую строку
      * @return array
      */
-    private function getQueryLeader($exception = array(), $column = 'country_id') {
+    private function getQueryLeader($column = 'country_id', $first = false) {
+        $first = $first ? ' LIMIT 1' : '';
         $data = $this->query(
-            'SELECT User.user_id, (User.positive_votes - User.negative_votes) AS points
+            'SELECT User.*, (User.positive_votes + User.negative_votes) AS points
             FROM (
                 SELECT ur.*
                 FROM user_ratings AS ur
-                ORDER BY ur.positive_votes - ur.negative_votes DESC
+                WHERE (ur.positive_votes + ur.negative_votes) > 0
+                ORDER BY ur.positive_votes + ur.negative_votes DESC
             ) AS User
-            WHERE User.user_id NOT IN ('.implode(',', $exception).') AND User.'.$column.' >= 0
             GROUP BY User.'.$column.'
-            ORDER BY points DESC'
+            ORDER BY points DESC'.$first
         );
         return $data;
     }

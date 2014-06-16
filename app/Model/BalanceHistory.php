@@ -30,7 +30,7 @@ class BalanceHistory extends AppModel {
     public function getOperationBonus() {
     	return array(
     		self::BH_REGISTER           => 10,
-                self::BH_DAILY              => 0,
+                self::BH_DAILY              => array(3, 5, 8, 10, 15),
                 self::BH_GROUP_VK           => 20,
                 self::BH_LEADER_WORLD       => 500,
                 self::BH_LEADER_COUNTRY     => 150,
@@ -68,25 +68,9 @@ class BalanceHistory extends AppModel {
             'conditions' => array(
                 'user_id' => $user_id,
                 'points <' => 0,
-                'DATE_SUB(NOW(),INTERVAL 24 HOUR) < ' => '= created'
+                'BalanceHistory.created > DATE_SUB(NOW(),INTERVAL 24 HOUR)'
             )
         ));
         return $data[0]['sumOut'];
-    }
-    
-    /**
-     * Получить время последнего начисления ИВ за лидерство
-     * @param int $user_id
-     * @param int $type
-     * @return str
-     */
-    public function getDateLeader($user_id, $type) {
-        $data = $this->find('first', array(
-            'fields' => array('created'),
-            'conditions' => array('user_id' => $user_id, 'oper_type' => $type),
-            'order'=> array('created' => 'DESC')
-        ));
-        $data = $data ? $data['BalanceHistory']['created'] : 0;
-        return $data;
     }
 }
