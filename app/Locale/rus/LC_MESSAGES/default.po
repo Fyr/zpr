@@ -1,0 +1,23 @@
+msgid "Zuper.su Support Team"
+msgstr "Zuper.su Служба поддержки"
+
+msgid "Notification from Zuper.su Support Team"
+msgstr "Уведомление от Службы поддержки Zuper.su"
+
+msgid "With best regards"
+msgstr "С уважением"
+
+msgid "New feedback from user was registered"
+msgstr "Получен новый отзыв"
+
+msgid "Your feedback was registered"
+msgstr "Ваш отзыв получен"
+
+msgid "Created"
+msgstr "Создано"
+
+msgid "Subject"
+msgstr "Тема"
+
+msgid "Your feedback with subject \"%s\" was received by our support team at %s"
+msgstr "Ваш отзыв с темой \"%s\" был получен нашей службой поддержки %s"
