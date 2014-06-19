@@ -16,7 +16,8 @@ class SetLeaderBalanceController extends AppController {
             $data = $this->UserRating->getCitiesLeader();
             foreach ($data as $key => $value) {
                 $citiesLeaders[$data[$key]['User']['user_id']] = array(
-                    'type' => BalanceHistory::BH_LEADER_CITY,
+                    'region_type' => BalanceHistory::BH_LEADER_CITY,
+                    'credo' => false,
                     'user_id' => $data[$key]['User']['user_id']
                 );
             }
@@ -25,7 +26,8 @@ class SetLeaderBalanceController extends AppController {
             $data = $this->UserRating->getCountriesLeader();
             foreach ($data as $key => $value) {
                 $countriesLeaders[$data[$key]['User']['user_id']] = array(
-                    'type' => BalanceHistory::BH_LEADER_COUNTRY,
+                    'region_type' => BalanceHistory::BH_LEADER_COUNTRY,
+                    'credo' => false,
                     'user_id' => $data[$key]['User']['user_id']
                 );
             }
@@ -34,7 +36,8 @@ class SetLeaderBalanceController extends AppController {
             $data = $this->UserRating->getWorldLeader();
             foreach ($data as $key => $value) {
                 $worldLeader[$data[$key]['User']['user_id']] = array(
-                    'type' => BalanceHistory::BH_LEADER_WORLD,
+                    'region_type' => BalanceHistory::BH_LEADER_WORLD,
+                    'credo' => false,
                     'user_id' => $data[$key]['User']['user_id']
                 );
             }
@@ -42,74 +45,41 @@ class SetLeaderBalanceController extends AppController {
             /* Объеденяем всех лидеров в один массив */
             $dataLeaders = Hash::merge($citiesLeaders, $countriesLeaders, $worldLeader);
             
-            /* Получаем лидера по кредо */
+            /* Получаем лидеров по кредо */
             $data = $this->UserRating->getCredoLeader();
             foreach ($data as $key => $value) {
                 $credoLeaders[$data[$key]['User']['id']] = array(
-                    'type' => BalanceHistory::BH_LEADER_CREDO,
+                    'credo' => BalanceHistory::BH_LEADER_CREDO,
                     'user_id' => intval($data[$key]['User']['id'])
-                    
                 );
             }
             
-            /* Добавим к массиву с лидерами массив с лидерами кредо */
-            $dataLeaders = array_merge($dataLeaders, $credoLeaders);
-            
-            $operType  = $this->BalanceHistory->getOperationOptions();
-            $operBonus = $this->BalanceHistory->getOperationBonus();
-            $accruals = array();
-            foreach ($dataLeaders as $key => $value) {
-                $addBonus = false;
-                /* Получим дату последнего лидерства */
-                $lastDate = $this->Leader->getDateLeader(
-                        $dataLeaders[$key]['user_id'],
-                        $dataLeaders[$key]['type']
-                );
-                /* Если вчера пользователь получал ИВ за лидерство... */
-                if ($lastDate != 0 && (time() - strtotime($lastDate) < 86400)) {
-                    /* ...проверим сколько потратил (24ч) */
-                    $sumOut = $this->BalanceHistory->getPointsSpent($dataLeaders[$key]['user_id']) * -1;
-                    /* Подсчитаем сколько нужно начислить ИВ исходя из потраченной суммы */
-                    $pointsFull = $operBonus[$dataLeaders[$key]['type']] - ($operBonus[$dataLeaders[$key]['type']] - $sumOut);
-                    /* Прировняем Points к максимальному значению по текущей операции */
-                    $points = ($pointsFull > $operBonus[$dataLeaders[$key]['type']]) ? $operBonus[$dataLeaders[$key]['type']] : $pointsFull;
-                    
-                    if (isset($accruals[$dataLeaders[$key]['user_id']])) {
-                        if (($pointsFull - $accruals[$dataLeaders[$key]['user_id']]) > $operBonus[$dataLeaders[$key]['type']]) {
-                            $points = $operBonus[$dataLeaders[$key]['type']];
-                        } else {
-                            $points = $pointsFull - $accruals[$dataLeaders[$key]['user_id']];
-                        }
-                    }
-                    /* Начисляем бонус если points больше 0 */
-                    if ($points > 0 ) {
-                        $addBonus = true;
-                        if(!isset($accruals[$dataLeaders[$key]['user_id']])) {
-                            $accruals = Hash::merge($accruals, array($dataLeaders[$key]['user_id'] => 0));
-                        }
-                        $accruals[$dataLeaders[$key]['user_id']] += $points; 
-                    }
-                } else {
-                    /* Если вчера он не был лидером - начисляем */
-                    $addBonus = true;
-                    $points = $operBonus[$dataLeaders[$key]['type']];
-                }
-                if ($addBonus) {
-                    /* Увеличиваем баланс пользователя */
-                    $this->BalanceHistory->addOperation(
-                            $dataLeaders[$key]['type'],
-                            $points,
-                            $dataLeaders[$key]['user_id'],
-                            $operType[$dataLeaders[$key]['type']]
-                    );
-                }
-                /* Добавим пользователя в таблицу лидеров */
-                $this->Leader->create();
-                $this->Leader->save(array(
-                    'user_id' => $dataLeaders[$key]['user_id'],
-                    'type' => $dataLeaders[$key]['type']
-                ));
-            }
+            /* Если лидер еще является и лидером кредо, то добавим соответствующий признак */
+            $dataLeaders = Hash::merge($dataLeaders, $credoLeaders);
+
+            /* Обработка лидеров */
+	    foreach ($dataLeaders as $leader) {
+		$operType = $this->BalanceHistory->getOperationOptions();
+		/* определим сумму для начисления */
+		$sumForLeader = array();
+		$sumForLeader[] = $this->BalanceHistory->getPointsAdd($leader['user_id'], $leader['region_type'], $leader['credo']);
+		/* начисляем полученную сумму */
+		foreach ($sumForLeader as $operations) {
+		    foreach ($operations as $data) {
+			$this->BalanceHistory->addOperation(
+			    $data['type'],
+			    $data['points'],
+			    $leader['user_id'],
+			    $operType[$data['type']]
+			);
+			/* После начислиния добавим пользователя в таблицу лидеров */
+			$this->Leader->saveLeader(array(
+			    'user_id' => $leader['user_id'],
+			    'type' => $data['type']
+			));
+		    }
+		}
+	    }       
         } catch (Exception $e) {
             $this->setError($e->getMessage());
         }

@@ -36,71 +36,9 @@ class AppController extends Controller {
         /*
          *  Начисление бонуса за ежедневневный заход на сайт
          */
-          
-        /* Получим дату авторизации, с которой начинается ежедневный отсчет */
-        $dateAuth = $this->User->find('first', array(
-            'fields' => array('date_auth'),
-            'conditions' => array('id' => $this->currentUserId)
-        ));
-        
-        /* Если дата авторизации существует... */
-        if ($dateAuth) {
-            /* ...проверим сколько дней подряд пользователь был на сайте */
-            $countDays = $this->BalanceHistory->find('count', array(
-                'fields' => array('id'),
-                'conditions' => array(
-                    'BalanceHistory.oper_type' => BalanceHistory::BH_DAILY,
-                    'BalanceHistory.user_id' => $this->currentUserId,
-                    'BalanceHistory.created >=' => $dateAuth['User']['date_auth']
-                )
-            ));
-            if ($countDays) {
-                /* Если в таблице balance_history есть записи старше чем дата авторизации
-                   проверим сколько времени прошло с момента авторизации */
-                $exDays = time() - strtotime($dateAuth['User']['date_auth']);
-                if ($exDays >= $countDays * 86400 && $exDays <= $countDays * 86400 + 86400 ) {
-                    /* Начался следующий день в серии ежедневных заходов
-                       добавим запись в историю начислений и изменим баланс.
-
-                       Если пользователь собрал серию ежедневных заходов более 5-ти дней
-                       уменьшим переменную содержащую количество дней до 4-x (5-й индекс), т.к. если
-                       кол-во дней 5 и более, то начисляется фиксированное количество ИВ */
-                    $countDays = $countDays >= 5 ? 4 : $countDays;
-                    $this->setEveryDayBonus($countDays);
-                } elseif ($exDays > $countDays * 86400 + 86400) {
-                    /* Если с момента последней записи в balance_history прошло больше 24 часов
-                       добавим запись в историю начислений, изменим баланс и обновим дату авторизации */
-                    $this->setEveryDayBonus(0);
-                }
-            } else {
-                /* Если в таблице balance_history нет ниодной записи старше даты авторизации
-                   добавим запись в историю начислений, изменим баланс и обновим дату авторизации */
-                $this->setEveryDayBonus(0);
-            }
-        } else {
-            /* Если даты авторизации не существует, т.е пользователь после регистрации еще не авторизировался
-               добавим запись в историю начислений, изменим баланс и запишем дату авторизации */
-            $this->setEveryDayBonus(0);
-        }
-    }
-    
-    /**
-     * Начисление бонуса за серию ежедневного захода
-     * @param int $numDay
-     */
-    private function setEveryDayBonus($numDay) {
-        $operType  = $this->BalanceHistory->getOperationOptions();
-        $operBonus = $this->BalanceHistory->getOperationBonus();
-        
-        $this->BalanceHistory->addOperation(
-            BalanceHistory::BH_DAILY,
-            $operBonus[BalanceHistory::BH_DAILY][$numDay],
-            $this->currentUserId,
-            $operType[BalanceHistory::BH_DAILY]
-        );
-        if (!$numDay) {
-            $this->User->save(array('id' => $this->currentUserId, 'date_auth' => DboSource::expression('NOW()')));
-        }
+	if ($this->currentUserId) {
+	    $this->BalanceHistory->calcEveryDayBonus($this->currentUserId);
+	}
     }
 
     public function beforeRender() {

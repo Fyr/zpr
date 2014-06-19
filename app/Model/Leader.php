@@ -13,7 +13,16 @@ class Leader extends AppModel {
             'conditions' => array('user_id' => $user_id, 'type' => $type),
             'order' => array('created' => 'DESC')
         ));
-        $data = $data ? $data['Leader']['created'] : 0;
+        $data = $data ? $data['Leader']['created'] : false;
         return $data;
+    }
+    
+    /**
+     * Сохранение пользователя в таблице лидеров
+     * @param array $leaders => array('user_id' => 1, 'type' => 1)
+     */
+    public function saveLeader($leaders) {
+        $this->create();
+        $this->save($leaders);
     }
 }
