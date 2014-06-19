@@ -1,12 +1,5 @@
-<h4>Notification from FaceThisWorld Support Team</h4>
+<h4><?=__('Notification from Zuper.su Support Team')?></h4>
 
 <p>
-    Your feedback with subject "<?= htmlspecialchars($data['subject']); ?>" was received by our support team at <?= date('d.m.Y H:i:s', strtotime($data['created'])); ?>.
-</p>
-
-<hr>
-
-<p>
-    With best regards,<br>
-    <a href="mailto:<?= Configure::read('support_email'); ?>">FaceThisWorld Support Team</a>
+	<?=__('Your feedback with subject "%s" was received by our support team at %s', htmlspecialchars($data['subject']), date('d.m.Y H:i:s', strtotime($data['created'])))?>
 </p>

@@ -281,22 +281,3 @@ Cache::config('_cake_model_', array(
                                    'serialize' => ($engine === 'File'),
                                    'duration' => $duration
                               ));
-
-Configure::write('current_domain_name', 'zuper.su');
-Configure::write('http_protocol', 'http');
-
-Configure::write('OAuth.vk.app_id', 4265264);
-Configure::write('OAuth.vk.app_secret', 'EJ6mBfKcXbgMxOCeadis');
-
-Configure::write('OAuth.vk.permissions', 'friends,wall,groups');
-Configure::write('OAuth.vk.redirect_uri', Configure::read('http_protocol') . '://' . Configure::read('current_domain_name') . '/api/auth/vk2');
-Configure::write('OAuth.vk.access_token_uri', 'https://oauth.vk.com/access_token');
-Configure::write('OAuth.vk.check_token_uri', 'https://api.vk.com/method/users.get');
-Configure::write('OAuth.vk.version', '5.14');
-
-Configure::write('OAuth.vk.success_auth_redirect', Configure::read('http_protocol') . '://' . Configure::read('current_domain_name') . '/vk.php');
-
-Configure::write('support_email', 'sedovandrey@gmail.com');
-Configure::write('support_email_from', array('FaceThisWorld Support Team <support@facethisworld.in>'));
-
-Configure::write('support_email_to', array('FaceThisWorld Support Team <' . Configure::read('support_email') .'>'));

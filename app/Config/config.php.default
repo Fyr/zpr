@@ -1,0 +1,23 @@
+<?
+Configure::write('current_domain_name', 'zuper.su');
+Configure::write('http_protocol', 'http');
+Configure::write('OAuth.vk.app_id', 4265264);
+Configure::write('OAuth.vk.app_secret', 'EJ6mBfKcXbgMxOCeadis');
+
+/* Dev.version:
+Configure::write('current_domain_name', 'api.zuper.dev');
+Configure::write('http_protocol', 'http');
+Configure::write('OAuth.vk.app_id', 4239712);
+Configure::write('OAuth.vk.app_secret', 'DSIuEyn1Mhyt24hZVJm3');
+*/
+
+Configure::write('OAuth.vk.permissions', 'friends,wall,groups');
+Configure::write('OAuth.vk.redirect_uri', Configure::read('http_protocol') . '://' . Configure::read('current_domain_name') . '/api/auth/vk2');
+Configure::write('OAuth.vk.access_token_uri', 'https://oauth.vk.com/access_token');
+Configure::write('OAuth.vk.version', '5.14');
+
+Configure::write('OAuth.vk.success_auth_redirect', Configure::read('http_protocol') . '://' . Configure::read('current_domain_name') . '/vk.php');
+
+Configure::write('support_email', 'sedovandrey@gmail.com');
+Configure::write('support_email_from', array(__('Zuper.su Support Team').' <support@zuper.su>'));
+Configure::write('support_email_to', array(__('Zuper.su Support Team').' <' . Configure::read('support_email') .'>'));
