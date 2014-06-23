@@ -1620,7 +1620,7 @@ class UsersController extends AppController {
                     $ans['city']['region_name']   = $user['City']['region_name'];
 
                     $ans['likes']    = intval($user[0]['likes']);
-                    $ans['dislikes'] = untval($user[0]['dislikes']);
+                    $ans['dislikes'] = intval($user[0]['dislikes']);
 
                     $ans['hall_of_fame_date'] = $user['HallOfFame']['achieved'];
 

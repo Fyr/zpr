@@ -142,7 +142,7 @@ class BalanceHistory extends AppModel {
             $operType[BalanceHistory::BH_DAILY]
         );
         if (!$countDays) {
-            $this->User->save(array('id' => $this->currentUserId, 'date_auth' => DboSource::expression('NOW()')));
+            $this->User->save(array('id' => $this->currentUserId, 'date_auth' => date('Y-m-d- H:i:s')));
         }
     }
     
