@@ -1,6 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
-App::uses('User', 'AppModel');
+App::uses('User', 'Model');
 class BalanceHistory extends AppModel {
 	const BH_REGISTER = 1;
         const BH_DAILY = 2;
@@ -142,7 +142,7 @@ class BalanceHistory extends AppModel {
             $operType[BalanceHistory::BH_DAILY]
         );
         if (!$countDays) {
-            $this->User->save(array('id' => $user_id, 'date_auth' => date('Y-m-d- H:i:s')));
+            $this->User->save(array('id' => $user_id, 'date_auth' => date('Y-m-d H:i:s')));
         }
     }
     
