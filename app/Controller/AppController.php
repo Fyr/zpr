@@ -1,13 +1,15 @@
 <?php
 App::uses('Controller', 'Controller');
-App::uses('BalanceHistory', 'Model');
+/*
 App::uses('User', 'Model');
+App::uses('BalanceHistory', 'Model');
+*/
 class AppController extends Controller {
 	
 	const STATUS_OK = 'success';
 	const STATUS_ERROR = 'error';
 
-    public $uses = array('Auth', 'User', 'BalanceHistory');
+    public $uses = array('Auth' /*, 'User', 'BalanceHistory'*/);
     public $authCookie;
     public $currentUserId;
     protected $auth_cookie_name;
@@ -36,9 +38,9 @@ class AppController extends Controller {
         /*
          *  Начисление бонуса за ежедневневный заход на сайт
          */
-	if ($this->currentUserId) {
-	    $this->BalanceHistory->calcEveryDayBonus($this->currentUserId);
-	}
+		if ($this->currentUserId) {
+			// $this->BalanceHistory->calcEveryDayBonus($this->currentUserId);
+		}
     }
 
     public function beforeRender() {

@@ -1,6 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
-App::uses('User', 'AppModel');
+App::uses('User', 'Model');
 class BalanceHistory extends AppModel {
 	const BH_REGISTER = 1;
         const BH_DAILY = 2;
@@ -142,26 +142,26 @@ class BalanceHistory extends AppModel {
             $operType[BalanceHistory::BH_DAILY]
         );
         if (!$countDays) {
-            $this->User->save(array('id' => $this->currentUserId, 'date_auth' => date('Y-m-d- H:i:s')));
+            $this->User->save(array('id' => $this->currentUserId, 'date_auth' => date('Y-m-d H:i:s')));
         }
     }
     
     public function calcEveryDayBonus($user_id) {
-	$dateAuth = $this->User->find('first', array(
-	    'fields' => array('date_auth'),
-	    'conditions' => array('id' => $user_id)
-	));
-	if ($dateAuth) {
-	    $countDays = $this->find('count', array(
-		'fields' => array('id'),
-		'conditions' => array(
-		    'BalanceHistory.oper_type' => BalanceHistory::BH_DAILY,
-		    'BalanceHistory.user_id' => $user_id,
-		    'BalanceHistory.created >=' => $dateAuth['User']['date_auth']
-		)
-	    ));
-	}
-	$countDays = ($countDays >= 5) ? 4 : $countDays;
-	$this->saveEveryDayBonus($countDays, $user_id);
+		$dateAuth = $this->User->find('first', array(
+		    'fields' => array('date_auth'),
+		    'conditions' => array('id' => $user_id)
+		));
+		if ($dateAuth) {
+		    $countDays = $this->find('count', array(
+			'fields' => array('id'),
+			'conditions' => array(
+			    'BalanceHistory.oper_type' => BalanceHistory::BH_DAILY,
+			    'BalanceHistory.user_id' => $user_id,
+			    'BalanceHistory.created >=' => $dateAuth['User']['date_auth']
+			)
+		    ));
+		}
+		$countDays = ($countDays >= 5) ? 4 : $countDays;
+		$this->saveEveryDayBonus($countDays, $user_id);
     }
 }
