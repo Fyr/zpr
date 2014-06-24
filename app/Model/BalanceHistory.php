@@ -86,28 +86,28 @@ class BalanceHistory extends AppModel {
 	$accruals = array();
 	$result = array();
 	$addBonus = false;
-	/* Получим дату последнего лидерства по региону */
+	// Получим дату последнего лидерства по региону
 	$lastDateRL = $leader->getDateLeader($user_id, $region_type);
-	/* Получим дату последнего лидерства по кредо */
+	// Получим дату последнего лидерства по кредо
 	$lastDateCL = $credo ? $leader->getDateLeader($user_id, $credo) : false;
-	/* Проверим сколько потратил (24ч) */
+	// Проверим сколько потратил (24ч)
 	$sumOut = $this->getPointsSpent($user_id) * -1;
-	/* Определим максимальную сумму начислений по региону и по кредо */
+	// Определим максимальную сумму начислений по региону и по кредо
 	$sumMax[0] = $operBonus[$region_type];
 	$sumMax[1] = $credo ? $operBonus[$credo] : 0;
-	/* Определим общую максимальную сумму для начисления */
+	// Определим общую максимальную сумму для начисления
 	$totalSumMax = $sumMax[0] + $sumMax[1];
-	/* Получим сумму для начислений по региону и по кредо */
+	// Получим сумму для начислений по региону и по кредо
 	$paramCount = $credo ? 2 : 1;
 	for ($i = 0; $i < $paramCount; $i++) {
-	    /* Определим тип текущей операции */
+	    // Определим тип текущей операции
 	    $currType = $i ? $credo : $region_type;
-	    /* Проверим был ли пользователь лидером вчера */
+	    // Проверим был ли пользователь лидером вчера
 	    $lastDate = $i ? $lastDateCL : $lastDateRL;
 	    if ($lastDate && (time() - strtotime($lastDate) < 86400)) {
-		/* Подсчитаем сколько нужно начислить ИВ исходя из потраченной суммы */
+		// Подсчитаем сколько нужно начислить ИВ исходя из потраченной суммы
 		$pointsFull = $sumOut;
-		/* Прировняем Points к максимальному значению по текущей операции, если points больше этого значения */
+		// Прировняем Points к максимальному значению по текущей операции, если points больше этого значения
 		$points = ($pointsFull > $sumMax[$i]) ? $sumMax[$i] : $pointsFull;
 		if (isset($accruals[$user_id])) {
 		    if (($pointsFull - $accruals[$user_id]) > $sumMax[$i]) {
@@ -120,10 +120,10 @@ class BalanceHistory extends AppModel {
 		}
 		$accruals[$user_id] += $points;
 	    } else {
-		/* Если вчера он не был лидером то начисляем по максимуму для указанного типа региона (кредо) */
+		// Если вчера он не был лидером то начисляем по максимуму для указанного типа региона (кредо)
 		$points = $sumMax[$i];
 	    }
-	    if ($points) $result[] = array('type' => $currType, 'points' => $points);
+	    $result[] = array('type' => $currType, 'points' => $points ? $points : 0);
 	}
 	return $result;
     }
@@ -142,11 +142,13 @@ class BalanceHistory extends AppModel {
             $operType[BalanceHistory::BH_DAILY]
         );
         if (!$countDays) {
-            $this->User->save(array('id' => $this->currentUserId, 'date_auth' => date('Y-m-d- H:i:s')));
+            $this->User->save(array('id' => $user_id, 'date_auth' => date('Y-m-d- H:i:s')));
         }
     }
     
     public function calcEveryDayBonus($user_id) {
+	$countDays = 0;
+	$addBonus = true;
 	$dateAuth = $this->User->find('first', array(
 	    'fields' => array('date_auth'),
 	    'conditions' => array('id' => $user_id)
@@ -160,8 +162,20 @@ class BalanceHistory extends AppModel {
 		    'BalanceHistory.created >=' => $dateAuth['User']['date_auth']
 		)
 	    ));
+	    if ($countDays) {
+		// Если в таблице balance_history есть записи старше чем дата авторизации
+		// проверим сколько времени прошло с момента авторизации
+		$exDays = time() - strtotime($dateAuth['User']['date_auth']);
+		if ($exDays >= ($countDays * 86400) && $exDays <= ($countDays * 86400 + 86400)) {
+		    // Начался следующий день в серии ежедневных заходов
+		    $countDays = ($countDays >= 5) ? 4 : $countDays;
+		} elseif ($exDays > $countDays * 86400 + 86400) {
+		    $countDays = 0;
+		} else {
+		    $addBonus = false;
+		}
+	    }
 	}
-	$countDays = ($countDays >= 5) ? 4 : $countDays;
-	$this->saveEveryDayBonus($countDays, $user_id);
+	if ($addBonus) $this->saveEveryDayBonus($countDays, $user_id);
     }
 }

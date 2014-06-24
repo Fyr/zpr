@@ -7,25 +7,43 @@ App::uses('Credo', 'Model');
 App::uses('Leader', 'Model');
 App::uses('User', 'Model');
 class TestsController extends AppController {
-    public $name = 'Tests';
     public $uses = array(
+	'Auth',
+	'Cities',
+	'ChatMessage',
+	'ChatMessageRead',
+	'HallOfFame',
+	'Post',
+	'ShellLog',
         'BalanceHistory',
         'City',
         'Country',
         'Credo',
         'Leader',
-        'User'
+        'User',
+	'UserComment',
+	'UserDefaults',
+	'UserLock',
+	'UserMessage',
+	'UserRating',
+	'UserVote',
+	'Zen'
     );
     
     public function index() {
-        $this->setBonusLeaderTest();
-	$this->saveBonusDailyTest();
+	//print_r(App::objects('Model'));
+	foreach ($this->uses as $model) {
+	    $this->$model->setDataSource('test');
+	}
+	
+        $this->_setBonusLeaderTest();
+	$this->_saveBonusDailyTest();
     }
 
     /**
      * Тестирование фунционала ежедневного начисления ИВ лидерам
      */
-    public function setBonusLeaderTest() {
+    private function _setBonusLeaderTest() {
 	echo '
 Тест №1
 Проверка алгоритма начисления ИВ лидерам регионов и кредо';
@@ -150,7 +168,7 @@ class TestsController extends AppController {
     /**
      * Тестирование фунционала начисления ИВ за серию ежедневного прибывания на сайте
      */
-    public function saveBonusDailyTest() {
+    private function _saveBonusDailyTest() {
 	echo '
 	    
 Тест №2
@@ -166,14 +184,10 @@ class TestsController extends AppController {
     Пользователь заходил на сайт каждый день в течении 10 дней.
     Общая сумма начисленных ИВ должна составить 116
     Результат: ';
-	for ($i = 10; $i >= 1; $i--) {
+	for ($i = 1; $i <= 10; $i++) {
 	    $this->BalanceHistory->calcEveryDayBonus(1704);
-	    $date = time() - (100000 * $i);
-	    $this->BalanceHistory->save(array(
-		'id' => $this->BalanceHistory->getLastInsertID(),
-		'created' => date('Y-m-d H:i:s', $date)
-	    ));
-	    if ($i == 10) $this->User->save(array('id' => 1704, 'date_auth' => date('Y-m-d H:i:s', $date)));
+	    $this->BalanceHistory->query('UPDATE balance_history SET created = created - INTERVAL 24 HOUR');
+	    $this->User->query('UPDATE users SET date_auth = date_auth - INTERVAL 1 DAY WHERE id = 1704');
 	}
 	// проверим
 	$result = $this->BalanceHistory->find('all', array(
@@ -194,22 +208,21 @@ class TestsController extends AppController {
     Пользователь был на сайте каждый день в течении 3 дней. Затем день не заходил, после чего составил серию заходов из 5 денй.
     Общая сумма начисленных ИВ должна составить 57
     Результат: ';
-	for ($i = 9; $i >= 1; $i--) {
-	    if ($i != 6) {
+	for ($i = 1; $i <= 9; $i++) {
+	    if ($i != 4) {
 		$this->BalanceHistory->calcEveryDayBonus(1704);
-		$date = time() - (100000 * $i);
-		$this->BalanceHistory->save(array(
-		    'id' => $this->BalanceHistory->getLastInsertID(),
-		    'created' => date('Y-m-d H:i:s', $date)
-		));
+		$this->BalanceHistory->query('UPDATE balance_history SET created = created - INTERVAL 24 HOUR');
 		if ($i == 5) {
 		    $this->BalanceHistory->save(array(
 			'id' => $this->BalanceHistory->getLastInsertID(),
 			'points' => 3
 		    ));
 		}
+		$this->User->query('UPDATE users SET date_auth = date_auth - INTERVAL 1 DAY WHERE id = 1704');
+	    } else {
+		$this->BalanceHistory->query('UPDATE balance_history SET created = created - INTERVAL 24 HOUR');
+		$this->User->query('UPDATE users SET date_auth = NOW() WHERE id = 1704');
 	    }
-	    if ($i == 9 || $i == 5) $this->User->save(array('id' => 1704, 'date_auth' => date('Y-m-d H:i:s', $date)));
 	}
 	// проверим
 	$result = $this->BalanceHistory->find('all', array(
