@@ -12,7 +12,7 @@
  * @property User User
  */
 class AuthController extends AppController {
-    public $uses = array('User', 'UserDefaults', 'UserRating', 'BalanceHistory');
+    public $uses = array('User', 'UserDefaults', 'UserRating', 'BalanceHistory', 'Referal', 'Vk');
     public $components = array('RequestHandler');
 
     protected function __getJSON($url) {
@@ -64,67 +64,41 @@ class AuthController extends AppController {
     private function __auth($service, $user_service_id, $api_token, $api_token_expires = null) {
         $success = true;
         $data    = array();
-
         $conditions = array();
         if ($service == 'fb') {
             $conditions['fb_id'] = $user_service_id;
         } elseif ($service == 'vk') {
             $conditions['vk_id'] = $user_service_id;
         }
+	try {
+	    $user = $this->User->find('first', array('conditions' => $conditions, 'fields' => array('id', 'vk_id')));
 
-        $user = $this->User->find('first', array('conditions' => $conditions,
-                                                 'fields'     => array('id', 'vk_id')));
+	    if (!empty($user) and isset($user['User']) and !empty($user['User'])) {
+		$data = $this->User->getUser($user['User']['id'], false);
 
-        if (!empty($user) and isset($user['User']) and !empty($user['User'])) {
-            $data = $this->User->getUser($user['User']['id'], false);
+		if ($service == 'vk') {
+		    $data = $this->User->update(array('vk_token' => $api_token, 'vk_token_expires' => $api_token_expires), $user['User']['id']);
+		}
 
-            if ($service == 'vk') {
-                $data = $this->User->update(array('vk_token'         => $api_token,
-                                                  'vk_token_expires' => $api_token_expires),
-                                            $user['User']['id']);
-            }
+		// Проверяем есть ли пользователь в группе ВК
+		$inGroup = $this->Vk->isMemberVk($user['User']['vk_id']);
+		if(intval($inGroup)){
+		    $this->BalanceHistory->saveMemberVkBonus($user['User']['id']);
+		}
+	    } else {
+		// Создадим нашего пользователя
+		$user_data = array();
 
-            // TODO: преверяем была ли сегодня авторизация, иначе начисляем бонус
-            
-            // Проверяем есть ли пользователь в группе ВК
-            $inGroup = $this->Auth->isMemberVk($user['User']['vk_id']);
-            
-            if(intval($inGroup->response)){
-                //Проверяем получал ли пользователь ИВ за вступление в группу
-                $result = $this->BalanceHistory->find('count', array(
-                    'conditions' => array(
-                        'user_id' => $user['User']['id'], 
-                        'oper_type' => BalanceHistory::BH_GROUP_VK
-                    )
-                    
-                ));
-                if(!$result){
-                    //Если не получал - начисляем
-                    $operBonus = $this->BalanceHistory->getOperationBonus();
-                    $operType = $this->BalanceHistory->getOperationOptions();
-                    $this->BalanceHistory->addOperation(
-                        BalanceHistory::BH_GROUP_VK, 
-                        $operBonus[BalanceHistory::BH_GROUP_VK], 
-                        $user['User']['id'], 
-                        $operType[BalanceHistory::BH_GROUP_VK]
-                    );
-                }
-            }
-        } else {
-            // Создадим нашего пользователя
-            $user_data = array();
+		if ($service == 'fb') {
+		    $user_data['fb_id'] = $user_service_id;
+		} elseif ($service == 'vk') {
+		    $user_data['vk_id']            = $user_service_id;
+		    $user_data['vk_token']         = $api_token;
+		    $user_data['vk_token_expires'] = $api_token_expires;
+		}
 
-            if ($service == 'fb') {
-                $user_data['fb_id'] = $user_service_id;
-            } elseif ($service == 'vk') {
-                $user_data['vk_id']            = $user_service_id;
-                $user_data['vk_token']         = $api_token;
-                $user_data['vk_token_expires'] = $api_token_expires;
-            }
+		$user_data['ready'] = false;
 
-            $user_data['ready'] = false;
-
-            try {
             	$defaults = $this->UserDefaults->getList();
             	extract($defaults);
                 $user = $this->User->add(array_merge(compact('credo_id', 'status'), $user_data));
@@ -136,31 +110,48 @@ class AuthController extends AppController {
                     $this->UserRating->save($user_rating_data);
                 }
                 
-            } catch (Exception $e) {
-                $user = false;
-            }
+		if (!$user or empty($user)) {
+		    $this->response->statusCode(500);
+		    $success = false;
+		    $data    = 'failed to create user';
+		} else {
+		    $data = $user;
+		    // если в куках есть инфа о реферале...
+		    if ($this->Cookie->read('ref_id')) {
+			// Прочитаем hash реферала и получим его ID
+			$user_ = $this->User->find('first', array(
+			    'conditions' => array('MD5(CONCAT(id, \''.Configure::read('Security.referal_salt').'\'))' => $this->Cookie->read('ref_id'))
+			));
+			if (Hash::get($user_, 'User.vk_id')) {
+			    // ... закинем реферала в БД
+			    $this->Referal->save(array('user_id' => $user_['User']['id'], 'referal_id' => $data['id']));
+			    $this->Cookie->delete('ref_id');
+			    // Получим список друзей (ВК) пользователя который привел реферала
+			    $getAllFrends = $this->Vk->getAllFrends($user_['User']['vk_id']);
+			    // Получим всех рефералов пользователя который привел реферала
+			    $referalsUser = $this->Referal->find('all', array('conditions' => array('user_id' => $user_['User']['id'])));
+			    // Исходя из этих данных высчитаем и начислим бонус
+			    $this->BalanceHistory->saveReferalBonus($getAllFrends, $referalsUser, $user_['User']['id']);
+			}
+		    }
+		}
+	    }
+	    if ($success) {
+		/*$success = $this->makeAuth($data['id']);
+		if (!$success) {
+		    $this->response->statusCode(500);
+		    $data = 'authorization failed';
+		}*/
+		if (!$this->makeAuth($data['id'])) throw new Exception('authorization failed');
+	    }
 
-            if (!$user or empty($user)) {
-                $this->response->statusCode(500);
-                $success = false;
-                $data    = 'failed to create user';
-            } else {
-                $data = $user;
-            }
-        }
-
-        if ($success) {
-            $success = $this->makeAuth($data['id']);
-            if (!$success) {
-                $this->response->statusCode(500);
-                $data = 'authorization failed';
-            }
-        }
-
-        return array(
-            'success' => $success,
-            'data'    => $data
-        );
+	    return array(
+		'success' => $success,
+		'data'    => $data
+	    );
+	} catch (Exception $e) {
+	    $this->setError($e->getMessage());
+	}
     }
 
     /**

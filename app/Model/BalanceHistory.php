@@ -9,6 +9,7 @@ class BalanceHistory extends AppModel {
         const BH_LEADER_COUNTRY = 5;
         const BH_LEADER_CITY = 6;
         const BH_LEADER_CREDO = 7;
+	const BH_REFERAL = 8;
 	const BH_SYS_CHANGE = 100;
 	
     public $useTable = 'balance_history';
@@ -23,6 +24,7 @@ class BalanceHistory extends AppModel {
                 self::BH_LEADER_COUNTRY     => 'Начисление ИВ за лидерство - "Лидер Страны"',
                 self::BH_LEADER_CITY        => 'Начисление ИВ за лидерство - "Лидер Города"',
                 self::BH_LEADER_CREDO       => 'Начисление ИВ за лидерство - "Лидер Кредо"',
+		self::BH_REFERAL	    => 'Начисление ИВ за приглашенных пользователей',
     		self::BH_SYS_CHANGE         => 'Изменение баланса админом'
     	);
     }
@@ -35,7 +37,8 @@ class BalanceHistory extends AppModel {
                 self::BH_LEADER_WORLD       => 500,
                 self::BH_LEADER_COUNTRY     => 150,
                 self::BH_LEADER_CITY        => 50,
-                self::BH_LEADER_CREDO       => 100
+                self::BH_LEADER_CREDO       => 100,
+		self::BH_REFERAL	    => array(10, 25, 50)
     	);
     }
     
@@ -177,5 +180,75 @@ class BalanceHistory extends AppModel {
 	    }
 	}
 	if ($addBonus) $this->saveEveryDayBonus($countDays, $user_id);
+    }
+    
+    /**
+     * Начисление бонуса за приглашенных пользователей
+     * @param type $getAllFrends - массив друзей ВК
+     * @param type $referalsUser - массив рефералов
+     */
+    public function saveReferalBonus($getAllFrends, $referalsUser, $user_id) {
+	$operType  = $this->getOperationOptions();
+        $operBonus = $this->getOperationBonus();
+	$addBonus = false;
+	// Количество друзей (ВК) пользователя среди своих рефералов
+	$countMyRef = 0;
+	foreach ($getAllFrends as $frend) {
+	    foreach ($referalsUser as $referal) {
+		if ($frend == $referal['User']['vk_id']) {
+		    $countMyRef++;
+		}
+	    }
+	}
+	// Найдем в таблице истории записи с типом 8 (referal)
+	$countReferalBonus = $this->find('count', array(
+	    'conditions' => array(
+		'user_id' => $user_id,
+		'oper_type' => BalanceHistory::BH_REFERAL
+	    )
+	));
+	// Высчитаем процент рефералов от всего кол-ва друзей (ВК)
+	$percentRefUser = $countMyRef / count($getAllFrends) * 100;
+	// Исходя из процента и кол-ва рефералов назначим бонус
+	if ($percentRefUser == 100 && $countMyRef >= 30) {
+	    $addBonus = ($countReferalBonus == 2) ? $operBonus[BalanceHistory::BH_REFERAL][2] : false;
+	} elseif ($percentRefUser >= 66 && $countMyRef >= 20) {
+	    $addBonus = ($countReferalBonus == 1) ? $operBonus[BalanceHistory::BH_REFERAL][1] : false;
+	} elseif ($percentRefUser >= 33 && $countMyRef >= 10) {
+	    $addBonus = ($countReferalBonus == 0) ? $operBonus[BalanceHistory::BH_REFERAL][0] : false;
+	}
+	if ($addBonus) {
+	    $this->addOperation(
+		BalanceHistory::BH_REFERAL,
+		$addBonus,
+		$user_id,
+		$operType[BalanceHistory::BH_REFERAL]
+	    );
+	}
+    }
+    
+    /**
+     * Начисление бонуса за вступление в группу ВК
+     * @param type $user_id
+     */
+    public function saveMemberVkBonus($user_id) {
+	$operBonus = $this->getOperationBonus();
+	$operType = $this->getOperationOptions();
+	// Проверяем получал ли пользователь ИВ за вступление в группу
+	$result = $this->find('count', array(
+	    'conditions' => array(
+		'user_id' => $user_id, 
+		'oper_type' => BalanceHistory::BH_GROUP_VK
+	    )
+	));
+	if(!$result){
+	    // Если не получал - начисляем
+	    $this->addOperation(
+		BalanceHistory::BH_GROUP_VK, 
+		$operBonus[BalanceHistory::BH_GROUP_VK], 
+		$user_id, 
+		$operType[BalanceHistory::BH_GROUP_VK]
+	    );
+	}
     }
 }

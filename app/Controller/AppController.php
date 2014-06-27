@@ -1,24 +1,26 @@
 <?php
 App::uses('Controller', 'Controller');
-App::uses('BalanceHistory', 'Model');
 App::uses('User', 'Model');
+App::uses('Referal', 'Model');
+App::uses('BalanceHistory', 'Model');
+
 class AppController extends Controller {
 	
 	const STATUS_OK = 'success';
 	const STATUS_ERROR = 'error';
 
-    public $uses = array('Auth', 'User', 'BalanceHistory');
+    public $uses = array('Auth', 'User', 'BalanceHistory', 'Referal');
     public $authCookie;
     public $currentUserId;
+    public $components = array('Cookie');
     protected $auth_cookie_name;
     protected $json_render = false, $_response = null;
 
     public function beforeFilter() {
         parent::beforeFilter();
-
         $this->json_render = true;
 
-        /* Читаем авторизационные куки */
+        // Читаем авторизационные куки
         $this->auth_cookie_name = Configure::read('Security.auth_cookie_name');
         if ($this->auth_cookie_name and isset($_COOKIE[$this->auth_cookie_name])) {
             $this->authCookie = $_COOKIE[$this->auth_cookie_name];
@@ -26,18 +28,21 @@ class AppController extends Controller {
             $this->authCookie = array();
         }
 
-        /* Определяем текущего пользователя по данным авторизационных кук */
+        // Определяем текущего пользователя по данным авторизационных кук
         $this->currentUserId = $this->Auth->authenticate($this->authCookie);
 
-        if (Configure::read('debug') > 0 and isset($this->request->query['user_id']) and $this->request->query['user_id']) {
+	if (Configure::read('debug') > 0 and isset($this->request->query['user_id']) and $this->request->query['user_id']) {
             $this->currentUserId = (int) $this->request->query['user_id'];
         }
         
-        /*
-         *  Начисление бонуса за ежедневневный заход на сайт
-         */
+        //Начисление бонуса за ежедневневный заход на сайт
 	if ($this->currentUserId) {
 	    $this->BalanceHistory->calcEveryDayBonus($this->currentUserId);
+	}
+	
+	// Если пользователь зашел на сайт по реферальной ссылке, и при этом не авторизован - сохраним ее в куках
+	if (isset($this->params->query['ref_id']) && !$this->currentUserId) {
+	    $this->Cookie->write('ref_id', $this->params->query['ref_id']);
 	}
     }
 
