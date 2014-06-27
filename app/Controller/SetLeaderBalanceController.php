@@ -12,7 +12,7 @@ class SetLeaderBalanceController extends AppController {
 
     public function index(){
         try {
-            /* Получаем лидеров по городам */
+            // Получаем лидеров по городам
             $data = $this->UserRating->getCitiesLeader();
             foreach ($data as $key => $value) {
                 $citiesLeaders[$data[$key]['User']['user_id']] = array(
@@ -22,7 +22,7 @@ class SetLeaderBalanceController extends AppController {
                 );
             }
             
-            /* Получаем лидеров по странам */
+            // Получаем лидеров по странам
             $data = $this->UserRating->getCountriesLeader();
             foreach ($data as $key => $value) {
                 $countriesLeaders[$data[$key]['User']['user_id']] = array(
@@ -32,7 +32,7 @@ class SetLeaderBalanceController extends AppController {
                 );
             }
             
-            /* Получаем лидера Мира */
+            // Получаем лидера Мира
             $data = $this->UserRating->getWorldLeader();
             foreach ($data as $key => $value) {
                 $worldLeader[$data[$key]['User']['user_id']] = array(
@@ -42,10 +42,10 @@ class SetLeaderBalanceController extends AppController {
                 );
             }
             
-            /* Объеденяем всех лидеров в один массив */
+            // Объеденяем всех лидеров в один массив
             $dataLeaders = Hash::merge($citiesLeaders, $countriesLeaders, $worldLeader);
             
-            /* Получаем лидеров по кредо */
+            // Получаем лидеров по кредо
             $data = $this->UserRating->getCredoLeader();
             foreach ($data as $key => $value) {
                 $credoLeaders[$data[$key]['User']['id']] = array(
@@ -54,16 +54,16 @@ class SetLeaderBalanceController extends AppController {
                 );
             }
             
-            /* Если лидер еще является и лидером кредо, то добавим соответствующий признак */
+            // Если лидер еще является и лидером кредо, то добавим соответствующий признак
             $dataLeaders = Hash::merge($dataLeaders, $credoLeaders);
 
-            /* Обработка лидеров */
+            // Обработка лидеров
 	    foreach ($dataLeaders as $leader) {
 		$operType = $this->BalanceHistory->getOperationOptions();
-		/* определим сумму для начисления */
+		// определим сумму для начисления
 		$sumForLeader = array();
 		$sumForLeader[] = $this->BalanceHistory->getPointsAdd($leader['user_id'], $leader['region_type'], $leader['credo']);
-		/* начисляем полученную сумму */
+		// начисляем полученную сумму
 		foreach ($sumForLeader as $operations) {
 		    foreach ($operations as $data) {
 			$this->BalanceHistory->addOperation(
@@ -72,7 +72,7 @@ class SetLeaderBalanceController extends AppController {
 			    $leader['user_id'],
 			    $operType[$data['type']]
 			);
-			/* После начислиния добавим пользователя в таблицу лидеров */
+			// После начислиния добавим пользователя в таблицу лидеров
 			$this->Leader->saveLeader(array(
 			    'user_id' => $leader['user_id'],
 			    'type' => $data['type']
