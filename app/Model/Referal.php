@@ -10,7 +10,7 @@ class Referal extends AppModel {
      * @param type $user_id
      */
     public function createReferalHash($user_id = false) {
-	$salt = Configure::read('Security.referal_salt');
+	$salt = Configure::read('Security.salt');
 	$referalHash = intval($user_id) ? md5($user_id.$salt) : false;
 	return $referalHash;
     }
@@ -24,13 +24,3 @@ class Referal extends AppModel {
 	return $data;
     }
 }
-
-/*
-CREATE TABLE `user_referals` (
- `id` int(11) NOT NULL AUTO_INCREMENT,
- `user_id` int(11) NOT NULL,
- `referal_id` int(11) NOT NULL,
- `created` datetime NOT NULL,
- PRIMARY KEY (`id`)
-)
-*/

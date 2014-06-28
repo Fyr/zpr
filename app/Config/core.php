@@ -186,10 +186,7 @@ Configure::write('Security.level', 'medium');
  */
 // Configure::write('Security.salt', 'DYhG93b0qyJfIxfs2guVoUubWwvniR2G0FgaC9mi');
 Configure::write('Security.salt', 'gFHFsHda4hu5qcxpv12cFGm8zxjqWnckBVxjUbyu');
-Configure::write('Security.auth_salt1', '4jsdI#$f0-UdaHfHUi124Ff24AF*()241sfa%(kN');
-Configure::write('Security.auth_salt2', 'PofuJNV38jF@op$kf*j1j79fnvjdyYIOf9*$@nmf');
 Configure::write('Security.auth_cookie_name', 'a');
-Configure::write('Security.referal_salt', 'kNTXnV68m4eMKiIZCFYfpBWsQcogSSZKu3rl7J8V');
 
 /**
  * A random numeric string (digits only) used to encrypt/decrypt strings.

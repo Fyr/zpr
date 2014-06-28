@@ -15,7 +15,7 @@ class Auth extends AppModel {
      * @return string   Строка соли
      */
     protected function generateSalt1() {
-        $salt = Configure::read('Security.auth_salt1');
+        $salt = Configure::read('Security.salt');
         return sha1($salt . microtime(true));
     }
 
@@ -25,7 +25,7 @@ class Auth extends AppModel {
      * @return string   Строка соли
      */
     protected function generateSalt2() {
-        $salt = Configure::read('Security.auth_salt2');
+        $salt = Configure::read('Security.salt');
         return sha1($salt . microtime(true));
     }
 
