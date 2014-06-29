@@ -33,13 +33,26 @@ class Vk extends AppModel {
 	try {
 	    App::uses('HttpSocket', 'Network/Http');
 	    $http = new HttpSocket();
-	    $data = json_decode($http->get($url, $param));
-	    if (!$data->response) {
-		throw new Exception('string is not json');
+	    $data = $http->get($url, $param);
+	    // проверим пришел ли ответ
+	    if (!$data) {
+		throw new Exception('Server not returning data');
+	    }
+	    // пробуем декодировать json 
+	    if (!$data = json_decode($data)) {
+		throw new Exception('Server returning data in not json');
+	    }
+	    // проверим ошибки сервиса
+	    if (isset($data->error)) {
+		throw new Exception($data->error->error_msg);
+	    }
+	    // получим response из ответа
+	    if (!isset($data->response)) {
+		throw new Exception('Server returning data without response');
 	    }
 	    return $data->response;
 	} catch (Exception $e) {
-	    $this->setError($e->getMessage());
+	    echo json_encode(array('status' => 'error', 'data' => $e->getMessage()));
 	}
     }
 }
