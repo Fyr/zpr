@@ -1,58 +1,51 @@
 <?php
 App::uses('AppModel', 'Model');
 class Vk extends AppModel {
-    public $name = 'Vk';
+	const VK_API_URL = 'https://api.vk.com/method/';
+	
+    public $useTable = false;
     
     /**
      * Получить друзей пользователя
      * @param type $userVkId
      * @return type
      */
-    public function getAllFrends($userVkId) {
-	$data = $this->requestVk(
-	    'https://api.vk.com/method/friends.get',
-	    array('user_id' => $userVkId)
-	);
-	return $data;
-    }
+	public function getAllFrends($userVkId) {
+		return $this->requestVk('friends.get', array('user_id' => $userVkId));
+	}
     
     /**
-     * Проверяем наличие пользователя в группе ВК
-     * @param int $vk_id
+     * Проверяем наличие пользователя в группе ВК для приложения
+     * @param int $vk_id - ID пользователя
      * @return obj
      */
     function isMemberVk($vk_id) {
-        $data = $this->requestVk(
-	    'https://api.vk.com/method/groups.isMember',
-	    array('gid' => 'zupersu', 'uid' => $vk_id)
-	);
-        return $data;
-    }
-    
-    private function requestVk($url, $param) {
-	try {
-	    App::uses('HttpSocket', 'Network/Http');
-	    $http = new HttpSocket();
-	    $data = $http->get($url, $param);
-	    // проверим пришел ли ответ
-	    if (!$data) {
-		throw new Exception('Server not returning data');
-	    }
-	    // пробуем декодировать json 
-	    if (!$data = json_decode($data)) {
-		throw new Exception('Server returning data in not json');
-	    }
-	    // проверим ошибки сервиса
-	    if (isset($data->error)) {
-		throw new Exception($data->error->error_msg);
-	    }
-	    // получим response из ответа
-	    if (!isset($data->response)) {
-		throw new Exception('Server returning data without response');
-	    }
-	    return $data->response;
-	} catch (Exception $e) {
-	    echo json_encode(array('status' => 'error', 'data' => $e->getMessage()));
+		return intval($this->requestVk('groups.isMember', array('gid' => 'zupersu', 'uid' => $vk_id)));
 	}
+    
+    private function requestVk($method, $params = array()) {
+		App::uses('HttpSocket', 'Network/Http');
+		$http = new HttpSocket();
+		$data = $http->get(VK_API_URL.$method, $params);
+		
+		// проверим пришел ли ответ
+		if ($data) {
+			// пробуем декодировать json 
+			$data = json_decode($data, true);
+			if ($data) { // анализируем ответ от сервера
+				if (isset($data['response'])) {
+					return $data['response'];
+				} elseif (isset($data['error'])) {
+					$error = Hash::get($data, 'error.error_msg');
+					if ($error) {
+						throw new Exception($error);
+					}
+				}
+			}
+		} else {
+			throw new Exception('Server not responds');
+		}
+		
+		throw new Exception('Incorrect server response');
     }
 }
