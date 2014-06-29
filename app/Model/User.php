@@ -1,11 +1,12 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: rem
- * Date: 29.05.12
- * Time: 2:26
- * To change this template use File | Settings | File Templates.
- */
+App::uses('AppModel', 'Model');
+App::uses('UserVote', 'Model');
+App::uses('Country', 'Model');
+App::uses('City', 'Model');
+App::uses('Credo', 'Model');
+App::uses('UserRating', 'Model');
+App::uses('Referal', 'Model');
+
 class User extends AppModel {
     public $PictureTypes = array(
         IMAGETYPE_GIF  => 'gif',
@@ -67,6 +68,7 @@ class User extends AppModel {
         $city       = ClassRegistry::init('City');
         $credo      = ClassRegistry::init('Credo');
         $userRating = ClassRegistry::init('UserRating');
+        $referal 	= ClassRegistry::init('Referal');
 
         $joins   = array();
         $joins[] = array(
@@ -205,6 +207,7 @@ class User extends AppModel {
         $answer['world_position']  = intval($world_rating[0]['rating']);
         $answer['country_position'] = intval($country_rating[0]['rating']);
         $answer['city_position']   = intval($city_rating[0]['rating']);
+        $answer['ref_hash'] = $referal->getHash($answer['id']);
 
         if ($current_user_id !== 0) {
             $answer['actions'] = $this->getUserActions($current_user_id, $answer['id']);
@@ -227,6 +230,7 @@ class User extends AppModel {
         $city       = ClassRegistry::init('City');
         $credo      = ClassRegistry::init('Credo');
         $userRating = ClassRegistry::init('UserRating');
+        $referal 	= ClassRegistry::init('Referal');
 
         $joins   = array();
         $joins[] = array(
@@ -388,6 +392,7 @@ class User extends AppModel {
             if ($current_user_id !== 0) {
                 $ans['actions'] = $this->getUserActions($current_user_id, $ans['id']);
             }
+            $answer['ref_hash'] = $referal->getHash($ans['id']);
 
             $answer[] = $ans;
         }

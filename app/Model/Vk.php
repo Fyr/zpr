@@ -26,7 +26,7 @@ class Vk extends AppModel {
     private function requestVk($method, $params = array()) {
 		App::uses('HttpSocket', 'Network/Http');
 		$http = new HttpSocket();
-		$data = $http->get(VK_API_URL.$method, $params);
+		$data = $http->get(self::VK_API_URL.$method, $params);
 		
 		// проверим пришел ли ответ
 		if ($data) {

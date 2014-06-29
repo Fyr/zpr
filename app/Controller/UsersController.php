@@ -262,26 +262,19 @@ class UsersController extends AppController {
      * @param $id
      */
     public function view($id) {
-        $data = array();
         try {
-
 	        if (!$id) {
 	            throw new Exception('no user specified');
 	        }
 
             if (strpos($id, ',')) {
                 $ids = explode(',', $id);
-
                 $data = $this->User->getUsers($ids, true, array('User.name'), true, $this->currentUserId);
             } else {
-                $user = $this->User->getUser($id, false, true, $this->currentUserId);
+                $data = $this->User->getUser($id, false, true, $this->currentUserId);
 
-                if (!$user) {
-                    $this->response->statusCode(400);
-                    $success = false;
-                    $data    = 'bad user request';
-                } else {
-                    $data = $user;
+                if (!$data) {
+                    throw new Exception('bad user request');
                 }
             }
             
@@ -289,7 +282,6 @@ class UsersController extends AppController {
         } catch (Exception $e) {
         	$this->setError($e->getMessage());
         }
-
     }
 
     /**

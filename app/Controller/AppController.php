@@ -30,9 +30,9 @@ class AppController extends Controller {
 
         // Определяем текущего пользователя по данным авторизационных кук
         $this->currentUserId = $this->Auth->authenticate($this->authCookie);
-
-	if (Configure::read('debug') > 0 and isset($this->request->query['user_id']) and $this->request->query['user_id']) {
-            $this->currentUserId = (int) $this->request->query['user_id'];
+        
+        if (Configure::read('debug') > 0 && isset($_GET['user_id']) && $_GET['user_id']) {
+            $this->currentUserId = intval($_GET['user_id']);
         }
         
         //Начисление бонуса за ежедневневный заход на сайт

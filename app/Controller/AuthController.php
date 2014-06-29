@@ -120,7 +120,7 @@ class AuthController extends AppController {
 		    if ($this->Cookie->read('ref_id')) {
 			// Прочитаем hash реферала и получим его ID
 			$user_ = $this->User->find('first', array(
-			    'conditions' => array('MD5(CONCAT(id, \''.Configure::read('Security.salt').'\'))' => $this->Cookie->read('ref_id'))
+			    'conditions' => array('MD5(CONCAT(id, \''.Configure::read('Security.salt').'ref_hash'.'\'))' => $this->Cookie->read('ref_id'))
 			));
 			if (Hash::get($user_, 'User.vk_id')) {
 			    // ... закинем реферала в БД

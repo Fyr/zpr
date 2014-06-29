@@ -241,7 +241,7 @@ class TestsController extends AppController {
 	    $this->Referal->create();
 	    $this->Referal->save(array('user_id' => $user_id, 'referal_id' => $user['User']['id']));
 	    // реферал успешно зарегался, запускаем механизм подсчета бонусов
-	    $this->BalanceHistory->saveReferalBonus($vk_ids, $this->Referal->getAllReferal($user_id), $user_id);
+	    $this->BalanceHistory->saveReferalBonus($vk_ids, $this->Referal->getFriends($user_id), $user_id);
 	}
     }
 
