@@ -26,7 +26,7 @@ class UserRating extends AppModel {
         $data = $this->query(
             'SELECT User.*, points
             FROM (
-                SELECT a.id, a.credo_id, (ur.positive_votes + ur.negative_votes) AS points
+                SELECT a.id, a.credo_id, (ur.positive_votes - ur.negative_votes) AS points
                 FROM users AS a
                 LEFT JOIN user_ratings AS ur ON (a.id = ur.user_id)
                 ORDER BY points DESC
@@ -65,12 +65,12 @@ class UserRating extends AppModel {
     private function getQueryLeader($column = 'country_id', $first = false) {
         $first = $first ? ' LIMIT 1' : '';
         $data = $this->query(
-            'SELECT User.*, (User.positive_votes + User.negative_votes) AS points
+            'SELECT User.*, (User.positive_votes - User.negative_votes) AS points
             FROM (
                 SELECT ur.*
                 FROM user_ratings AS ur
-                WHERE (ur.positive_votes + ur.negative_votes) > 0
-                ORDER BY ur.positive_votes + ur.negative_votes DESC
+                WHERE (ur.positive_votes - ur.negative_votes) > 0
+                ORDER BY ur.positive_votes - ur.negative_votes DESC
             ) AS User
             GROUP BY User.'.$column.'
             ORDER BY points DESC'.$first
