@@ -66,12 +66,14 @@ class SetLeaderBalanceController extends AppController {
 		// начисляем полученную сумму
 		foreach ($sumForLeader as $operations) {
 		    foreach ($operations as $data) {
-			$this->BalanceHistory->addOperation(
-			    $data['type'],
-			    $data['points'],
-			    $leader['user_id'],
-			    $operType[$data['type']]
-			);
+			if ($data['points']) {
+			    $this->BalanceHistory->addOperation(
+				$data['type'],
+				$data['points'],
+				$leader['user_id'],
+				$operType[$data['type']]
+			    );
+			}
 			// После начислиния добавим пользователя в таблицу лидеров
 			$this->Leader->saveLeader(array(
 			    'user_id' => $leader['user_id'],
