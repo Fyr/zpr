@@ -79,12 +79,6 @@ class AuthController extends AppController {
 		if ($service == 'vk') {
 		    $data = $this->User->update(array('vk_token' => $api_token, 'vk_token_expires' => $api_token_expires), $user['User']['id']);
 		}
-
-		// Проверяем есть ли пользователь в группе ВК
-		$inGroup = $this->Vk->isMemberVk($user['User']['vk_id']);
-		if(intval($inGroup)){
-		    $this->BalanceHistory->saveMemberVkBonus($user['User']['id']);
-		}
 	    } else {
 		// Создадим нашего пользователя
 		$user_data = array();
@@ -143,6 +137,12 @@ class AuthController extends AppController {
 		    $data = 'authorization failed';
 		}*/
 		if (!$this->makeAuth($data['id'])) throw new Exception('authorization failed');
+		
+		// Проверяем есть ли пользователь в группе ВК
+		$inGroup = $this->Vk->isMemberVk($data['vk_id']);
+		if(intval($inGroup)){
+		    $this->BalanceHistory->saveMemberVkBonus($data['id']);
+		}
 	    }
 
 	    return array(
