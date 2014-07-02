@@ -392,7 +392,7 @@ class User extends AppModel {
             if ($current_user_id !== 0) {
                 $ans['actions'] = $this->getUserActions($current_user_id, $ans['id']);
             }
-            $answer['ref_hash'] = $referal->getHash($ans['id']);
+            $ans['ref_hash'] = $referal->getHash($ans['id']);
 
             $answer[] = $ans;
         }
